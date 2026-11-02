@@ -25,11 +25,9 @@ Regenerate icons and the feature graphic with `node scripts/build-store-assets.m
 
 1. **Contact email** — set `CONTACT_EMAIL` in `src/routes/privacy.tsx`.
 2. **Real charts** — run `npm run data:yahoo` and commit `src/data/real-scenarios.json`.
-3. **Deploy to Vercel** with `VITE_AUTH_ENABLED=false`. Note your production URL.
+3. **Deploy to Vercel** and note your production URL. Set `VITE_SITE_URL` to it (for share cards).
 4. **Replace `YOUR-APP.vercel.app`** in `android/twa-manifest.json` with that host.
    A custom domain is better than `*.vercel.app` if you have one; the host is baked into the app.
-5. Optional: `VITE_GROK_EXTENSIONS=0` stops the page loading the grok.com script, which keeps the
-   Data safety answers below simple. This is a project setting in the Grok template.
 
 ## Build the Android app (on your computer)
 
@@ -95,8 +93,7 @@ update Bubblewrap and rebuild, or set it to 36 and rebuild.
 ## App content answers
 
 - **Ads**: No ads.
-- **Data safety**: no data collected or shared (scores stay in on-device storage). If the grok.com
-  script stays on, check what it collects before answering.
+- **Data safety**: no data collected or shared (scores stay in on-device storage).
 - **Target audience**: 18+ (or 13+). Not designed for children.
 - **Content rating questionnaire**: reference / educational; no violence, gambling or user content.
   It is not a simulated gambling app: there is no money, betting or prizes.

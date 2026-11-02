@@ -37,8 +37,7 @@ function Privacy() {
         <Section title="What other services see">
           Like any website, the app is delivered by a hosting provider (Vercel), which keeps standard
           server logs such as IP address and browser type for security and reliability. Fonts load
-          from Google Fonts, which receives your IP address when it serves them. The page may also
-          load a small script from grok.com, the tool the app was built with. We do not receive or
+          from Google Fonts, which receives your IP address when it serves them. We do not receive or
           use any of this data.
         </Section>
         <Section title="Market data">
