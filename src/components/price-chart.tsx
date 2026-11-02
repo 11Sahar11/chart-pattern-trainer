@@ -84,7 +84,7 @@ export function PriceChart({
 
     const chart = createChart(el, {
       ...base,
-      timeScale: { borderColor: border, fixLeftEdge: true, fixRightEdge: true },
+      timeScale: { borderColor: border, fixLeftEdge: true },
       handleScroll: { mouseWheel: false, pressedMouseMove: true, horzTouchDrag: true },
       handleScale: { mouseWheel: false, pinch: true, axisPressedMouseMove: true },
     });
@@ -134,7 +134,7 @@ export function PriceChart({
     if (showRsi && rsiRef.current) {
       rsiChart = createChart(rsiRef.current, {
         ...base,
-        timeScale: { borderColor: border, visible: false, fixLeftEdge: true, fixRightEdge: true },
+        timeScale: { borderColor: border, visible: false, fixLeftEdge: true },
         handleScroll: false,
         handleScale: false,
       });
