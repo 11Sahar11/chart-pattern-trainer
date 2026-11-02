@@ -332,7 +332,12 @@ export const scenarios: Scenario[] = [
 
 export const indicatorLabels: Record<Scenario["useful"][number], string> = {
   sma: "SMA 20",
+  sma50: "SMA 50",
   ema: "EMA 12",
+  bb: "Bollinger",
   volume: "Volume",
+  obv: "OBV",
   rsi: "RSI 14",
+  macd: "MACD",
+  stoch: "Stochastic",
 };

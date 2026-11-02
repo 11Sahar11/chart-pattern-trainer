@@ -11,7 +11,17 @@ const site = (process.env.VITE_SITE_URL ?? "").replace(/\/$/, "");
 
 const patternsSrc = await readFile(resolve(root, "src/lib/patterns.ts"), "utf8");
 const slugs = [...patternsSrc.matchAll(/slug: "([a-z0-9-]+)"/g)].map((m) => m[1]);
-const pages = ["/", "/daily", "/moments", "/patterns", ...slugs.map((s) => `/patterns/${s}`), "/privacy"];
+const indicators = ["sma", "sma50", "ema", "bb", "volume", "obv", "rsi", "macd", "stoch"];
+const pages = [
+  "/",
+  "/daily",
+  "/moments",
+  "/patterns",
+  ...slugs.map((s) => `/patterns/${s}`),
+  "/indicators",
+  ...indicators.map((i) => `/indicators/${i}`),
+  "/privacy",
+];
 
 const robots = ["User-agent: *", "Allow: /", ...(site ? ["", `Sitemap: ${site}/sitemap.xml`] : [])].join("\n");
 await writeFile(resolve(root, "public/robots.txt"), `${robots}\n`);

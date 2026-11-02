@@ -14,7 +14,16 @@ export type Guide = {
   title: string;
 };
 
-export type IndicatorId = "sma" | "ema" | "volume" | "rsi";
+export type IndicatorId =
+  | "sma"
+  | "sma50"
+  | "ema"
+  | "bb"
+  | "volume"
+  | "obv"
+  | "rsi"
+  | "macd"
+  | "stoch";
 
 export type Scenario = {
   id: string;
@@ -187,4 +196,108 @@ export function drift(candles: Candle[], from: number): Direction {
   if (change > 0.025) return "up";
   if (change < -0.025) return "down";
   return "sideways";
+}
+
+export type Point = { time: string; value: number };
+
+/** Bollinger Bands: 20-day SMA with bands two standard deviations away. */
+export function bollinger(candles: Candle[], period = 20, k = 2) {
+  const upper: Point[] = [];
+  const middle: Point[] = [];
+  const lower: Point[] = [];
+  for (let i = period - 1; i < candles.length; i++) {
+    let sum = 0;
+    for (let j = i - period + 1; j <= i; j++) sum += candles[j].close;
+    const mean = sum / period;
+    let sq = 0;
+    for (let j = i - period + 1; j <= i; j++) sq += (candles[j].close - mean) ** 2;
+    const sd = Math.sqrt(sq / period);
+    const time = candles[i].time;
+    upper.push({ time, value: round(mean + k * sd) });
+    middle.push({ time, value: round(mean) });
+    lower.push({ time, value: round(mean - k * sd) });
+  }
+  return { upper, middle, lower };
+}
+
+function emaValues(values: number[], period: number): (number | null)[] {
+  const out: (number | null)[] = values.map(() => null);
+  if (values.length < period) return out;
+  let prev = values.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  out[period - 1] = prev;
+  const k = 2 / (period + 1);
+  for (let i = period; i < values.length; i++) {
+    prev = values[i] * k + prev * (1 - k);
+    out[i] = prev;
+  }
+  return out;
+}
+
+/** MACD 12/26/9: line, signal and histogram. */
+export function macd(candles: Candle[]) {
+  const closes = candles.map((c) => c.close);
+  const fast = emaValues(closes, 12);
+  const slow = emaValues(closes, 26);
+  const lineIdx: number[] = [];
+  const lineVals: number[] = [];
+  closes.forEach((_, i) => {
+    if (fast[i] != null && slow[i] != null) {
+      lineIdx.push(i);
+      lineVals.push((fast[i] as number) - (slow[i] as number));
+    }
+  });
+  const sig = emaValues(lineVals, 9);
+  const line: Point[] = [];
+  const signal: Point[] = [];
+  const hist: Point[] = [];
+  lineIdx.forEach((ci, j) => {
+    const time = candles[ci].time;
+    line.push({ time, value: round(lineVals[j]) });
+    if (sig[j] != null) {
+      signal.push({ time, value: round(sig[j] as number) });
+      hist.push({ time, value: round(lineVals[j] - (sig[j] as number)) });
+    }
+  });
+  return { line, signal, hist };
+}
+
+/** Slow stochastic 14/3: %K and its 3-day average %D. */
+export function stochastic(candles: Candle[], period = 14, smooth = 3) {
+  const raw: { time: string; v: number }[] = [];
+  for (let i = period - 1; i < candles.length; i++) {
+    let hi = -Infinity;
+    let lo = Infinity;
+    for (let j = i - period + 1; j <= i; j++) {
+      hi = Math.max(hi, candles[j].high);
+      lo = Math.min(lo, candles[j].low);
+    }
+    raw.push({ time: candles[i].time, v: hi === lo ? 50 : ((candles[i].close - lo) / (hi - lo)) * 100 });
+  }
+  const k: Point[] = [];
+  for (let i = smooth - 1; i < raw.length; i++) {
+    let s = 0;
+    for (let j = i - smooth + 1; j <= i; j++) s += raw[j].v;
+    k.push({ time: raw[i].time, value: round(s / smooth) });
+  }
+  const d: Point[] = [];
+  for (let i = smooth - 1; i < k.length; i++) {
+    let s = 0;
+    for (let j = i - smooth + 1; j <= i; j++) s += k[j].value;
+    d.push({ time: k[i].time, value: round(s / smooth) });
+  }
+  return { k, d };
+}
+
+/** On-balance volume: running total of volume, added on up days and subtracted on down days. */
+export function obv(candles: Candle[]): Point[] {
+  const out: Point[] = [];
+  let total = 0;
+  candles.forEach((c, i) => {
+    if (i > 0) {
+      if (c.close > candles[i - 1].close) total += c.volume;
+      else if (c.close < candles[i - 1].close) total -= c.volume;
+    }
+    out.push({ time: c.time, value: total });
+  });
+  return out;
 }

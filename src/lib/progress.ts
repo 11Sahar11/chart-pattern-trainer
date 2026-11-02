@@ -18,6 +18,8 @@ export type Progress = {
   version: 1;
   decks: Partial<Record<DeckId, DeckStats>>;
   byTag: Record<string, { seen: number; hit: number }>;
+  /** Indicator choices: how often turning it on (or leaving it off) was right. */
+  byIndicator?: Record<string, { scored: number; right: number }>;
   /** Scenario ids answered wrong and not yet fixed, oldest first. */
   misses: string[];
   /** Daily Chart streak, counted in local calendar days. */
@@ -105,7 +107,12 @@ export function deckStats(p: Progress, deck: DeckId): DeckStats {
   return p.decks[deck] ?? emptyDeck;
 }
 
-export function recordAnswer(deck: DeckId, scenario: Scenario, right: boolean) {
+export function recordAnswer(
+  deck: DeckId,
+  scenario: Scenario,
+  right: boolean,
+  picks: { id: string; right: boolean | null }[] = [],
+) {
   ensure();
   const prev = deckStats(state, deck);
   const stats: DeckStats = {
@@ -120,9 +127,15 @@ export function recordAnswer(deck: DeckId, scenario: Scenario, right: boolean) {
     const t = byTag[tag] ?? { seen: 0, hit: 0 };
     byTag[tag] = { seen: t.seen + 1, hit: t.hit + (right ? 1 : 0) };
   }
+  const byIndicator = { ...(state.byIndicator ?? {}) };
+  for (const p of picks) {
+    if (p.right === null) continue;
+    const t = byIndicator[p.id] ?? { scored: 0, right: 0 };
+    byIndicator[p.id] = { scored: t.scored + 1, right: t.right + (p.right ? 1 : 0) };
+  }
   let misses = state.misses.filter((id) => id !== scenario.id);
   if (!right) misses = [...misses, scenario.id].slice(-MAX_MISSES);
-  commit({ ...state, decks: { ...state.decks, [deck]: stats }, byTag, misses });
+  commit({ ...state, decks: { ...state.decks, [deck]: stats }, byTag, byIndicator, misses });
 }
 
 export function resetDeck(deck: DeckId) {

@@ -1,20 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { CalendarCheck, RotateCcw } from "lucide-react";
-import { Drill, Stat, Tally } from "@/components/drill";
+import { ChevronDown } from "lucide-react";
+import { Drill, Tally } from "@/components/drill";
+import { Onboarding } from "@/components/onboarding";
 import { scenarios as practiceScenarios } from "@/lib/scenarios";
 import { realScenarios, scenarioById } from "@/lib/real-scenarios";
 import type { Scenario } from "@/lib/market";
-import {
-  DAILY_SIZE,
-  TALLY,
-  dateKey,
-  deckStats,
-  getProgress,
-  liveStreak,
-  resetDeck,
-  useProgress,
-} from "@/lib/progress";
+import { TALLY, deckStats, getProgress, useProgress } from "@/lib/progress";
 
 type Mode = "practice" | "real" | "review";
 const MODE_KEY = "cpt-mode";
@@ -101,9 +93,6 @@ export function Trainer() {
   const stats = deckStats(progress, mode);
   const rate = stats.total === 0 ? "—" : `${Math.round((stats.correct / stats.total) * 100)}%`;
   const missCount = progress.misses.filter((id) => scenarioById.has(id)).length;
-  const today = dateKey();
-  const dailyDone = (progress.daily[today]?.length ?? 0) >= DAILY_SIZE;
-  const streak = liveStreak(progress, today);
 
   let scenario: Scenario | undefined;
   let label = "";
@@ -131,65 +120,39 @@ export function Trainer() {
   ];
 
   return (
-    <div className="flex flex-col gap-4">
-      {!dailyDone && (
-        <Link
-          to="/daily"
-          className="flex items-center gap-3 rounded-lg border border-primary/30 bg-surface px-4 py-3 transition-colors hover:border-primary/60"
-        >
-          <CalendarCheck size={20} className="shrink-0 text-primary" aria-hidden />
-          <span className="flex-1 text-sm">
-            <strong className="font-semibold">Today's Daily Chart is ready.</strong>{" "}
-            <span className="text-muted">
-              Five charts, same for everyone.{streak > 0 ? ` Keep your ${streak}-day streak going.` : ""}
-            </span>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-3">
+        <label className="relative inline-flex items-center">
+          <span className="sr-only">Deck</span>
+          <select
+            id="deck"
+            value={mode}
+            onChange={(e) => openMode(e.target.value as Mode)}
+            className="h-11 appearance-none rounded-md border border-border bg-surface pr-9 pl-3 text-sm font-semibold md:h-9"
+          >
+            {tabs.map(([id, text, count]) => (
+              <option key={id} value={id}>
+                {text} ({count})
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={16} className="pointer-events-none absolute right-3 text-muted" aria-hidden />
+        </label>
+        <div className="flex items-center gap-4">
+          <span className="hidden md:block">
+            <Tally recent={stats.recent} size={TALLY} />
           </span>
-          <span className="text-sm font-semibold text-primary">Play</span>
-        </Link>
-      )}
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div
-          role="tablist"
-          aria-label="Deck"
-          className="flex max-w-full overflow-x-auto rounded-md border border-border bg-surface p-0.5"
-        >
-          {tabs.map(([id, text, count]) => (
-            <button
-              key={id}
-              type="button"
-              role="tab"
-              aria-selected={mode === id}
-              onClick={() => openMode(id)}
-              className={`flex h-11 shrink-0 items-center gap-2 rounded-[5px] px-3 text-sm font-medium whitespace-nowrap transition-colors md:h-9 ${
-                mode === id ? "bg-fg text-bg" : "text-muted hover:text-fg"
-              }`}
-            >
-              {text}
-              <span className={`text-xs tabular-nums ${mode === id ? "opacity-70" : ""}`}>{count}</span>
-            </button>
-          ))}
+          <Link to="/stats" className="text-right text-sm tabular-nums" aria-label="Your stats">
+            <span className="font-semibold">
+              {stats.correct}/{stats.total}
+            </span>
+            <span className="text-muted">
+              {stats.total > 0 ? ` · ${rate}` : ""}
+              {stats.streak > 1 ? ` · ${stats.streak} in a row` : ""}
+            </span>
+          </Link>
         </div>
       </div>
-
-      <section aria-label="Score" className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <dl className="flex gap-6">
-          <Stat label="Score" value={`${stats.correct}/${stats.total}`} />
-          <Stat label="Hit rate" value={rate} />
-          <Stat label="Streak" value={String(stats.streak)} />
-          <Stat label="Best" value={String(stats.best)} />
-        </dl>
-        <Tally recent={stats.recent} size={TALLY} label={`Last ${TALLY}`} />
-        <button
-          type="button"
-          onClick={() => resetDeck(mode)}
-          disabled={stats.total === 0}
-          className="ml-auto inline-flex h-11 items-center gap-1.5 rounded-md px-2 text-sm text-muted transition-colors hover:text-fg disabled:opacity-40 disabled:hover:text-muted md:h-9"
-        >
-          <RotateCcw size={15} aria-hidden />
-          Reset score
-        </button>
-      </section>
 
       {mode === "real" && realScenarios.length === 0 && (
         <p className="rounded-md border border-border bg-surface px-4 py-3 text-sm text-muted">
@@ -211,6 +174,7 @@ export function Trainer() {
       ) : (
         <ReviewEmpty finished={reviewQueue.length > 0} onRestart={() => openMode("review")} hasMore={missCount > 0} />
       )}
+      <Onboarding />
     </div>
   );
 }
