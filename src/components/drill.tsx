@@ -154,7 +154,7 @@ export function Drill({
               {phase === "revealed" ? (moment ?? scenario.pattern) : hiddenNote}
             </span>
           </p>
-          <fieldset className="flex flex-wrap gap-1.5">
+          <fieldset className="flex flex-wrap gap-1 md:gap-1.5">
             <legend className="sr-only">Indicators</legend>
             {indicators.map(({ id, swatch }) => (
               <button
@@ -162,7 +162,7 @@ export function Drill({
                 type="button"
                 aria-pressed={on[id]}
                 onClick={() => toggle(id)}
-                className={`inline-flex h-10 items-center gap-2 rounded-md border px-2.5 text-xs font-medium transition-colors md:h-8 ${
+                className={`inline-flex h-10 items-center gap-1.5 rounded-md border px-2 text-xs font-medium transition-colors md:h-8 md:gap-2 md:px-2.5 ${
                   on[id]
                     ? "border-fg/40 bg-raised text-fg"
                     : "border-border text-muted hover:border-fg/30 hover:text-fg"
@@ -355,14 +355,14 @@ export function Tally({ recent, size = 20, label }: { recent: boolean[]; size?: 
   const hits = recent.filter(Boolean).length;
   return (
     <div className="flex items-center gap-2">
-      {label && <span className="label">{label}</span>}
-      <ol className="flex gap-[3px]" aria-label={recent.length ? `${recent.length} calls: ${hits} hits` : "No calls yet"}>
+      {label && <span className="label whitespace-nowrap">{label}</span>}
+      <ol className="flex gap-[2px] md:gap-[3px]" aria-label={recent.length ? `${recent.length} calls: ${hits} hits` : "No calls yet"}>
         {Array.from({ length: size }, (_, i) => {
           const r = recent[i - (size - recent.length)];
           return (
             <li
               key={i}
-              className={`relative h-3.5 w-3.5 rounded-[2px] border ${
+              className={`relative h-3 w-3 rounded-[2px] border md:h-3.5 md:w-3.5 ${
                 r === true ? "border-up bg-up" : r === false ? "border-down/70" : "border-border"
               }`}
             >
