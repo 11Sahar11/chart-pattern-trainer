@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Minus, RotateCcw, TrendingDown, TrendingUp } from "lucide-react";
 import { PriceChart } from "@/components/price-chart";
-import { indicatorLabels, scenarios } from "@/lib/scenarios";
+import { indicatorLabels, scenarios as practiceScenarios } from "@/lib/scenarios";
+import { realScenarios } from "@/lib/real-scenarios";
 import type { Direction, IndicatorId } from "@/lib/market";
 
+type Mode = "practice" | "real";
 const STORAGE_KEY = "chart-pattern-trainer-v1";
+const MODE_KEY = "chart-pattern-trainer-mode";
+const statsKey = (mode: Mode) => (mode === "practice" ? STORAGE_KEY : `${STORAGE_KEY}-real`);
 
 type Stats = {
   correct: number;
@@ -21,9 +25,9 @@ const calls: { id: Direction; label: string; hint: string }[] = [
   { id: "sideways", label: "No edge", hint: "Range, or not clear yet" },
 ];
 
-function loadStats(): Stats {
+function loadStats(mode: Mode): Stats {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(statsKey(mode));
     if (!raw) return emptyStats;
     const parsed = JSON.parse(raw) as Partial<Stats>;
     return {
@@ -38,6 +42,7 @@ function loadStats(): Stats {
 }
 
 export function Trainer() {
+  const [mode, setMode] = useState<Mode>("practice");
   const [index, setIndex] = useState(0);
   const [phase, setPhase] = useState<"read" | "revealed">("read");
   const [pick, setPick] = useState<Direction | null>(null);
@@ -48,9 +53,32 @@ export function Trainer() {
   const [rsiOn, setRsiOn] = useState(false);
 
   useEffect(() => {
-    setStats(loadStats());
+    let saved: Mode = "practice";
+    try {
+      if (localStorage.getItem(MODE_KEY) === "real" && realScenarios.length > 0) saved = "real";
+    } catch {
+      // storage unavailable: stay on practice
+    }
+    setMode(saved);
+    setStats(loadStats(saved));
   }, []);
 
+  function switchMode(next: Mode) {
+    if (next === mode) return;
+    setMode(next);
+    setIndex(0);
+    setPhase("read");
+    setPick(null);
+    setStats(loadStats(next));
+    try {
+      localStorage.setItem(MODE_KEY, next);
+    } catch {
+      // ignore
+    }
+  }
+
+  const scenarios = mode === "real" && realScenarios.length > 0 ? realScenarios : practiceScenarios;
+  const realEmpty = mode === "real" && realScenarios.length === 0;
   const scenario = scenarios[index % scenarios.length];
   const visible = useMemo(
     () =>
@@ -79,7 +107,11 @@ export function Trainer() {
             ? Math.max(prev.best, prev.streak + 1)
             : prev.best,
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      try {
+        localStorage.setItem(statsKey(mode), JSON.stringify(next));
+      } catch {
+        // ignore
+      }
       return next;
     });
   }
@@ -91,7 +123,11 @@ export function Trainer() {
   }
 
   function resetScore() {
-    localStorage.removeItem(STORAGE_KEY);
+    try {
+      localStorage.removeItem(statsKey(mode));
+    } catch {
+      // ignore
+    }
     setStats(emptyStats);
   }
 
@@ -110,6 +146,31 @@ export function Trainer() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <div
+            role="tablist"
+            aria-label="Chart source"
+            className="flex h-11 items-center rounded-full border border-border p-1"
+          >
+            {(
+              [
+                ["practice", `Practice · ${practiceScenarios.length}`],
+                ["real", `Real charts · ${realScenarios.length}`],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={mode === id}
+                onClick={() => switchMode(id)}
+                className={`h-9 rounded-full px-3 text-sm transition ${
+                  mode === id ? "bg-primary/15 text-primary" : "text-muted hover:text-fg"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <Stat label="Score" value={`${stats.correct}/${stats.total}`} />
           <Stat label="Hit rate" value={`${rate}%`} />
           <Stat label="Streak" value={String(stats.streak)} />
@@ -125,6 +186,13 @@ export function Trainer() {
         </div>
       </header>
 
+      {realEmpty && (
+        <p className="rounded-xl border border-border bg-surface p-4 text-sm text-muted">
+          No real charts yet. Run <code className="text-fg">npm run data:yahoo</code> once to pull
+          daily candles from Yahoo Finance, then reload. Showing practice setups meanwhile.
+        </p>
+      )}
+
       <section className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="overflow-hidden rounded-2xl border border-border bg-surface">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
@@ -133,7 +201,11 @@ export function Trainer() {
                 Setup {index + 1} of {scenarios.length}
               </p>
               <p className="text-sm text-fg">
-                {phase === "read" ? "Pattern hidden until you commit" : scenario.pattern}
+                {phase === "read"
+                  ? scenario.source
+                    ? "Ticker and dates hidden until you commit"
+                    : "Pattern hidden until you commit"
+                  : scenario.pattern}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -194,7 +266,18 @@ export function Trainer() {
               >
                 {hit ? "Correct" : "Not this time"}
               </p>
-              <h2 className="font-display text-3xl leading-none">{scenario.pattern}</h2>
+              <h2 className="font-display text-3xl leading-none">
+                {scenario.source ? scenario.source.ticker : scenario.pattern}
+              </h2>
+              {scenario.source && (
+                <p className="text-sm text-muted tabular-nums">
+                  {scenario.source.from} → {scenario.source.to} · next 20 sessions{" "}
+                  <span className={scenario.source.move >= 0 ? "text-up" : "text-down"}>
+                    {scenario.source.move >= 0 ? "+" : ""}
+                    {scenario.source.move.toFixed(1)}%
+                  </span>
+                </p>
+              )}
               <p className="text-sm text-muted">
                 You called <span className="text-fg">{labelFor(pick)}</span>. The tape went{" "}
                 <span className="text-fg">{labelFor(scenario.correct)}</span>.
@@ -234,7 +317,7 @@ export function Trainer() {
       </section>
 
       <p className="text-xs text-muted">
-        Educational drill on historical-style setups. A correct call here is not a reason to trade
+        Educational drill on historical setups. Real charts use Yahoo Finance data, rebased to 100. A correct call here is not a reason to trade
         real money. Most day traders lose.
       </p>
     </main>

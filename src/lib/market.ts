@@ -27,6 +27,8 @@ export type Scenario = {
   explanation: string;
   indicatorNote: string;
   caution: string;
+  /** Real-chart setups only: the ticker and dates, revealed after the call. */
+  source?: { ticker: string; from: string; to: string; move: number };
 };
 
 type BarSpec = {

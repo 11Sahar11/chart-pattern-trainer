@@ -10,3 +10,19 @@ Score and streak stay in the browser. This is a drill, not a broker.
 npm install
 npm run dev
 ```
+
+## Real charts from Yahoo Finance
+
+The "Real charts" mode uses actual daily candles. Build the set once (Node 18+, needs internet):
+
+```bash
+npm run data:yahoo                       # ~30 tickers, 10 years, 8 setups each
+npm run data:yahoo -- --per=15           # more setups per ticker
+npm run data:yahoo -- --tickers=AAPL,TSLA,TEVA
+```
+
+This writes `src/data/real-scenarios.json`. Each setup shows 60 candles, then reveals the next 20.
+Prices are rebased to 100 and dates are hidden, so the ticker can't be recognized until you commit.
+The answer is "higher" or "lower" only when the move beats the chart's own volatility; otherwise it's "no edge".
+
+Yahoo data is for personal and educational use. Use a licensed data provider before shipping this commercially.
