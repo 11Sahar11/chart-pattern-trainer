@@ -16,6 +16,8 @@ export type IndicatorInfo = {
   id: IndicatorId;
   name: string;
   short: string;
+  /** Fits a phone-width indicator button. */
+  chip: string;
   /** Drawn on the price chart, or in its own panel underneath. */
   kind: "overlay" | "pane";
   /** Tailwind background class for the legend swatch. */
@@ -33,6 +35,7 @@ export const indicatorInfo: IndicatorInfo[] = [
     id: "sma",
     name: "Simple Moving Average (20)",
     short: "SMA 20",
+    chip: "SMA 20",
     kind: "overlay",
     swatch: "bg-sma",
     family: "Trend",
@@ -50,6 +53,7 @@ export const indicatorInfo: IndicatorInfo[] = [
     id: "sma50",
     name: "Simple Moving Average (50)",
     short: "SMA 50",
+    chip: "SMA 50",
     kind: "overlay",
     swatch: "bg-sma50",
     family: "Trend",
@@ -67,6 +71,7 @@ export const indicatorInfo: IndicatorInfo[] = [
     id: "ema",
     name: "Exponential Moving Average (12)",
     short: "EMA 12",
+    chip: "EMA 12",
     kind: "overlay",
     swatch: "bg-ema",
     family: "Trend",
@@ -84,6 +89,7 @@ export const indicatorInfo: IndicatorInfo[] = [
     id: "bb",
     name: "Bollinger Bands (20, 2)",
     short: "Bollinger",
+    chip: "Bands",
     kind: "overlay",
     swatch: "bg-bb",
     family: "Volatility",
@@ -101,6 +107,7 @@ export const indicatorInfo: IndicatorInfo[] = [
     id: "volume",
     name: "Volume",
     short: "Volume",
+    chip: "Volume",
     kind: "overlay",
     swatch: "bg-pencil",
     family: "Volume",
@@ -118,6 +125,7 @@ export const indicatorInfo: IndicatorInfo[] = [
     id: "obv",
     name: "On-Balance Volume",
     short: "OBV",
+    chip: "OBV",
     kind: "pane",
     swatch: "bg-primary",
     family: "Volume",
@@ -135,6 +143,7 @@ export const indicatorInfo: IndicatorInfo[] = [
     id: "rsi",
     name: "Relative Strength Index (14)",
     short: "RSI 14",
+    chip: "RSI 14",
     kind: "pane",
     swatch: "bg-fg",
     family: "Momentum",
@@ -152,6 +161,7 @@ export const indicatorInfo: IndicatorInfo[] = [
     id: "macd",
     name: "MACD (12, 26, 9)",
     short: "MACD",
+    chip: "MACD",
     kind: "pane",
     swatch: "bg-sma",
     family: "Momentum",
@@ -169,6 +179,7 @@ export const indicatorInfo: IndicatorInfo[] = [
     id: "stoch",
     name: "Stochastic Oscillator (14, 3)",
     short: "Stochastic",
+    chip: "Stoch",
     kind: "pane",
     swatch: "bg-ema",
     family: "Momentum",

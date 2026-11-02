@@ -169,7 +169,7 @@ export function Drill({
                   }`}
                 >
                   <span aria-hidden className={`h-0.5 w-3 shrink-0 rounded-full ${info.swatch} ${isOn ? "" : "opacity-40"}`} />
-                  <span className="truncate">{info.short}</span>
+                  <span className="truncate">{info.chip}</span>
                   {verdict && <VerdictDot verdict={verdict} />}
                 </button>
               );

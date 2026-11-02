@@ -56,7 +56,7 @@ for (const [name, viewport] of [
   await shot(page, `${name}-01b-home-full`);
   await call(page, "Higher");
   await shot(page, `${name}-02-home-revealed`);
-  await page.getByText("Why it moved").click();
+  await page.getByText("Why it moved", { exact: true }).click();
   await shot(page, `${name}-02b-revealed-why`);
 
   await go(page, "/daily");
