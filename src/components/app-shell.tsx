@@ -45,7 +45,7 @@ function DailyPill() {
 /** Learn covers both patterns and indicators. */
 function isActive(to: string, path: string) {
   if (to === "/") return path === "/";
-  if (to === "/patterns") return path.startsWith("/patterns") || path.startsWith("/indicators");
+  if (to === "/patterns") return ["/patterns", "/indicators", "/candles"].some((p) => path.startsWith(p));
   return path.startsWith(to);
 }
 

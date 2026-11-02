@@ -6,6 +6,8 @@ import {
   createChart,
   type IChartApi,
   type ISeriesApi,
+  type SeriesMarker,
+  type Time,
 } from "lightweight-charts";
 import {
   bollinger,
@@ -31,6 +33,8 @@ type Props = {
   active: IndicatorId[];
   guides: Guide[];
   markerTime?: string;
+  /** Candles to mark after the reveal, e.g. a hammer at the call. */
+  highlight?: { times: string[]; label: string };
 };
 
 const PLOT_MS = 900;
@@ -45,7 +49,7 @@ function prefersReducedMotion() {
   return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 }
 
-export function PriceChart({ candles, visibleCount, active, guides, markerTime }: Props) {
+export function PriceChart({ candles, visibleCount, active, guides, markerTime, highlight }: Props) {
   const priceRef = useRef<HTMLDivElement>(null);
   const paneRefs = useRef<Partial<Record<IndicatorId, HTMLDivElement | null>>>({});
   // The count already on screen, so a reveal animates only the new candles.
@@ -202,7 +206,21 @@ export function PriceChart({ candles, visibleCount, active, guides, markerTime }
         shown.map((c) => ({ time: c.time, value: c.volume, color: `${c.close >= c.open ? up : down}59` })),
       );
       if (markerTime && count > 0) {
-        series.setMarkers([{ time: markerTime, position: "aboveBar", color: ink, shape: "arrowDown", text: "Call" }]);
+        const marks: SeriesMarker<Time>[] = (highlight?.times ?? [])
+          .filter((t) => t !== markerTime)
+          .map((t) => ({ time: t, position: "belowBar" as const, color: primary, shape: "circle" as const, text: "" }));
+        marks.push({
+          time: markerTime,
+          position: "aboveBar",
+          color: ink,
+          shape: "arrowDown",
+          text: highlight ? `Call · ${highlight.label}` : "Call",
+        });
+        if (highlight?.times.includes(markerTime)) {
+          marks.push({ time: markerTime, position: "belowBar", color: primary, shape: "circle", text: "" });
+        }
+        marks.sort((a, b) => (String(a.time) < String(b.time) ? -1 : String(a.time) > String(b.time) ? 1 : 0));
+        series.setMarkers(marks);
       }
     }
 
@@ -238,7 +256,7 @@ export function PriceChart({ candles, visibleCount, active, guides, markerTime }
     };
     // `activeKey` stands in for `active`, which is a new array on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [candles, visibleCount, activeKey, markerTime, guides]);
+  }, [candles, visibleCount, activeKey, markerTime, guides, highlight?.label]);
 
   return (
     <div className="graph-paper flex flex-col">

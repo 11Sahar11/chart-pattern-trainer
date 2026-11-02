@@ -86,6 +86,23 @@ for (const [name, viewport] of [
   await call(page, "Lower");
   await shot(page, `${name}-08c-indicator-page`);
 
+  await go(page, "/candles");
+  await shot(page, `${name}-11-candles`);
+  await go(page, "/candles/morning-star");
+  await shot(page, `${name}-12-candle-page`);
+  await go(page, "/candles/quiz");
+  await shot(page, `${name}-13-quiz`, false);
+  await page.getByRole("group", { name: "Answers" }).getByRole("button").first().click();
+  await page.waitForTimeout(300);
+  await shot(page, `${name}-14-quiz-answered`, false);
+  for (let i = 0; i < 10; i++) {
+    const answer = page.getByRole("group", { name: "Answers" }).getByRole("button").first();
+    if (await answer.isEnabled().catch(() => false)) await answer.click();
+    await page.getByRole("button", { name: /Next candle|See your score/ }).click();
+    await page.waitForTimeout(250);
+  }
+  await shot(page, `${name}-15-quiz-score`);
+
   await go(page, "/");
   await page.selectOption("#deck", "review");
   await page.waitForTimeout(800);

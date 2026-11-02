@@ -7,6 +7,7 @@ import { recordAnswer, type DeckId } from "@/lib/progress";
 import { patternForTag, tagsFor } from "@/lib/patterns";
 import { infoById, offeredFor, pickWasRight, readText, verdictFor, type Verdict } from "@/lib/indicators";
 import { shareReveal } from "@/lib/share";
+import { candleOutcome, detectAt, type CandleMatch } from "@/lib/candles";
 
 const calls: { id: Direction; label: string; hint: string; key: string }[] = [
   { id: "up", label: "Higher", hint: "Next swing resolves up", key: "↑" },
@@ -64,6 +65,18 @@ export function Drill({
   const pattern = tagsFor(scenario).map(patternForTag).find(Boolean);
   const moment = scenario.source?.title;
   const active = offered.filter((id) => on.includes(id));
+  // The candlestick pattern formed by the last candles before the call, if any.
+  const candle = useMemo(() => detectAt(scenario.candles, scenario.revealAt - 1), [scenario]);
+  const highlight = useMemo(
+    () =>
+      phase === "revealed" && candle
+        ? {
+            times: scenario.candles.slice(candle.start, candle.end + 1).map((c) => c.time),
+            label: candle.pattern.short,
+          }
+        : undefined,
+    [phase, candle, scenario],
+  );
 
   // After the call the player can still switch indicators to look; only the
   // set that was on at the moment of the call is scored.
@@ -147,6 +160,7 @@ export function Drill({
           active={active}
           guides={guides}
           markerTime={markerTime}
+          highlight={highlight}
         />
         <fieldset className="border-t border-border px-3 py-2.5 md:px-4">
           <legend className="sr-only">Indicators offered on this chart</legend>
@@ -248,6 +262,8 @@ export function Drill({
               </p>
             </div>
 
+            {candle && <CandleAtCall match={candle} actual={scenario.correct} />}
+
             <section className="rounded-md bg-raised/60 p-3">
               <h3 className="flex items-baseline justify-between gap-2 text-sm font-bold">
                 Your indicator read
@@ -322,6 +338,34 @@ export function Drill({
         )}
       </aside>
     </div>
+  );
+}
+
+function CandleAtCall({ match, actual }: { match: CandleMatch; actual: Direction }) {
+  const outcome = candleOutcome(match, actual);
+  const word =
+    match.points === "up" ? "pointed higher" : match.points === "down" ? "pointed lower" : "signals indecision";
+  return (
+    <Link
+      to="/candles/$slug"
+      params={{ slug: match.pattern.slug }}
+      className="flex items-start gap-3 rounded-md border border-border p-3 text-sm transition-colors hover:border-fg/40"
+    >
+      <span
+        aria-hidden
+        className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${
+          outcome === "worked" ? "bg-up" : outcome === "failed" ? "bg-down" : "bg-border"
+        }`}
+      />
+      <span className="flex-1">
+        <span className="font-semibold">Candle at the call: {match.pattern.name}</span>
+        <span className="block text-muted">
+          It {word}.{" "}
+          {outcome === "worked" ? "It worked." : outcome === "failed" ? "It failed this time." : "Price went its own way."}
+        </span>
+      </span>
+      <ArrowRight size={15} className="mt-1 shrink-0 text-primary" aria-hidden />
+    </Link>
   );
 }
 
