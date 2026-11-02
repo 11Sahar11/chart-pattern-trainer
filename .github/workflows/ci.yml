@@ -25,7 +25,6 @@ jobs:
 
   screenshots:
     # Visual check: run the app on sample data and photograph every page.
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
