@@ -1,5 +1,6 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { ServiceWorker } from "@/components/service-worker";
+import { AppShell } from "@/components/app-shell";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "Chart Pattern Trainer";
@@ -52,7 +53,9 @@ export const Route = createRootRoute({
       </head>
       <body>
         <ServiceWorker />
-        <Outlet />
+        <AppShell>
+          <Outlet />
+        </AppShell>
         <Scripts />
       </body>
     </html>

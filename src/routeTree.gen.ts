@@ -9,55 +9,133 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DailyRouteImport } from './routes/daily'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as StatsRouteImport } from './routes/stats'
+import { Route as MomentsIndexRouteImport } from './routes/moments/index'
+import { Route as MomentsPackRouteImport } from './routes/moments/$pack'
+import { Route as PatternsIndexRouteImport } from './routes/patterns/index'
+import { Route as PatternsSlugRouteImport } from './routes/patterns/$slug'
 
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DailyRoute = DailyRouteImport.update({
+  id: '/daily',
+  path: '/daily',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatsRoute = StatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MomentsIndexRoute = MomentsIndexRouteImport.update({
+  id: '/moments/',
+  path: '/moments/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MomentsPackRoute = MomentsPackRouteImport.update({
+  id: '/moments/$pack',
+  path: '/moments/$pack',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PatternsIndexRoute = PatternsIndexRouteImport.update({
+  id: '/patterns/',
+  path: '/patterns/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PatternsSlugRoute = PatternsSlugRouteImport.update({
+  id: '/patterns/$slug',
+  path: '/patterns/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/daily': typeof DailyRoute
   '/privacy': typeof PrivacyRoute
+  '/stats': typeof StatsRoute
+  '/moments/$pack': typeof MomentsPackRoute
+  '/patterns/$slug': typeof PatternsSlugRoute
+  '/moments/': typeof MomentsIndexRoute
+  '/patterns/': typeof PatternsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/daily': typeof DailyRoute
   '/privacy': typeof PrivacyRoute
+  '/stats': typeof StatsRoute
+  '/moments/$pack': typeof MomentsPackRoute
+  '/patterns/$slug': typeof PatternsSlugRoute
+  '/moments': typeof MomentsIndexRoute
+  '/patterns': typeof PatternsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/daily': typeof DailyRoute
   '/privacy': typeof PrivacyRoute
+  '/stats': typeof StatsRoute
+  '/moments/$pack': typeof MomentsPackRoute
+  '/patterns/$slug': typeof PatternsSlugRoute
+  '/moments/': typeof MomentsIndexRoute
+  '/patterns/': typeof PatternsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/privacy'
+  fullPaths:
+    | '/'
+    | '/daily'
+    | '/privacy'
+    | '/stats'
+    | '/moments/$pack'
+    | '/patterns/$slug'
+    | '/moments/'
+    | '/patterns/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/privacy'
-  id: '__root__' | '/' | '/privacy'
+  to:
+    | '/'
+    | '/daily'
+    | '/privacy'
+    | '/stats'
+    | '/moments/$pack'
+    | '/patterns/$slug'
+    | '/moments'
+    | '/patterns'
+  id:
+    | '__root__'
+    | '/'
+    | '/daily'
+    | '/privacy'
+    | '/stats'
+    | '/moments/$pack'
+    | '/patterns/$slug'
+    | '/moments/'
+    | '/patterns/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DailyRoute: typeof DailyRoute
   PrivacyRoute: typeof PrivacyRoute
+  StatsRoute: typeof StatsRoute
+  MomentsPackRoute: typeof MomentsPackRoute
+  PatternsSlugRoute: typeof PatternsSlugRoute
+  MomentsIndexRoute: typeof MomentsIndexRoute
+  PatternsIndexRoute: typeof PatternsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -65,12 +143,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/daily': {
+      id: '/daily'
+      path: '/daily'
+      fullPath: '/daily'
+      preLoaderRoute: typeof DailyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/moments/': {
+      id: '/moments/'
+      path: '/moments'
+      fullPath: '/moments/'
+      preLoaderRoute: typeof MomentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/moments/$pack': {
+      id: '/moments/$pack'
+      path: '/moments/$pack'
+      fullPath: '/moments/$pack'
+      preLoaderRoute: typeof MomentsPackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/patterns/': {
+      id: '/patterns/'
+      path: '/patterns'
+      fullPath: '/patterns/'
+      preLoaderRoute: typeof PatternsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/patterns/$slug': {
+      id: '/patterns/$slug'
+      path: '/patterns/$slug'
+      fullPath: '/patterns/$slug'
+      preLoaderRoute: typeof PatternsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DailyRoute: DailyRoute,
   PrivacyRoute: PrivacyRoute,
+  StatsRoute: StatsRoute,
+  MomentsPackRoute: MomentsPackRoute,
+  PatternsSlugRoute: PatternsSlugRoute,
+  MomentsIndexRoute: MomentsIndexRoute,
+  PatternsIndexRoute: PatternsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
