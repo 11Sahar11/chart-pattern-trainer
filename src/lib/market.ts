@@ -28,7 +28,17 @@ export type Scenario = {
   indicatorNote: string;
   caution: string;
   /** Real-chart setups only: the ticker and dates, revealed after the call. */
-  source?: { ticker: string; from: string; to: string; move: number };
+  source?: {
+    ticker: string;
+    from: string;
+    to: string;
+    move: number;
+    /** Famous Moments only. */
+    title?: string;
+    blurb?: string;
+  };
+  /** Stats buckets: a pattern slug for practice setups, chart conditions for real ones. */
+  tags?: string[];
 };
 
 type BarSpec = {

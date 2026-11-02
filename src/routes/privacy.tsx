@@ -13,7 +13,7 @@ export const Route = createFileRoute("/privacy")({
 
 function Privacy() {
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-8 md:py-12">
+    <div className="mx-auto w-full max-w-2xl py-4 md:py-8">
       <Link
         to="/"
         className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted hover:text-fg"

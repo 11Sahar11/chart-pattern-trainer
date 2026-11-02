@@ -2,8 +2,12 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, "growth-*"]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   check:
@@ -15,5 +19,40 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm install --no-audit --no-fund
-      - run: npm run typecheck
+      # Build first: it regenerates src/routeTree.gen.ts, which typecheck reads.
       - run: npm run build
+      - run: npm run typecheck
+
+  screenshots:
+    # Visual check: run the app on sample data and photograph every page.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Sample data (not committed)
+        run: node scripts/build-real-scenarios.mjs --mock
+      - name: Start the app
+        run: |
+          npx vite dev --port 3000 > dev.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/ > /dev/null && break; sleep 2; done
+          curl -sf http://localhost:3000/ > /dev/null
+      - run: node ci/screenshots.mjs
+      - name: Publish screenshots to the ci-shots branch
+        if: always()
+        run: |
+          mkdir -p /tmp/pub && cp -r shots/* /tmp/pub/ 2>/dev/null || true
+          cp src/routeTree.gen.ts /tmp/pub/routeTree.gen.ts || true
+          cp dev.log /tmp/pub/dev.log || true
+          cd /tmp/pub
+          git init -q -b ci-shots
+          git config user.name "ci"
+          git config user.email "ci@users.noreply.github.com"
+          git add -A
+          git commit -qm "Screenshots for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" ci-shots

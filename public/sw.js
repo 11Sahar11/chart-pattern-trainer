@@ -1,7 +1,7 @@
 // Offline support for the installed app (PWA and the Android wrapper).
 // Pages: network first, fall back to the last copy. Built assets are
 // content-hashed, so they are served from cache once fetched.
-const VERSION = "v1";
+const VERSION = "v2";
 const PAGES = `pages-${VERSION}`;
 const ASSETS = `assets-${VERSION}`;
 const PRECACHE = ["/", "/privacy", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];

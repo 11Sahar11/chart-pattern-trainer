@@ -110,8 +110,11 @@ function rsiAt(closes, i, p = 14) {
 
 // ---------- data ----------
 
-async function fetchYahoo(ticker) {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?range=${range}&interval=1d&events=split,div`;
+async function fetchYahoo(ticker, window) {
+  const span = window
+    ? `period1=${Math.floor(window.from / 1000)}&period2=${Math.floor(window.to / 1000)}`
+    : `range=${range}`;
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?${span}&interval=1d&events=split,div`;
   const res = await fetch(url, {
     headers: { "User-Agent": "Mozilla/5.0 (chart-pattern-trainer data script)" },
   });
@@ -249,8 +252,15 @@ function buildScenario(ticker, bars, start, n) {
         ? "Indicators disagreed here. Real tape rarely lines up as neatly as textbook patterns."
         : "One clean read is not a system. Track how often the same read works across many charts.";
 
+  // Stats buckets: the trend into the call and what momentum and volume looked like.
+  const tags = [trend > 0.08 ? "uptrend" : trend < -0.08 ? "downtrend" : "range"];
+  if (r14 >= 70) tags.push("overbought");
+  if (r14 <= 30) tags.push("oversold");
+  if (volRatio > 1.8) tags.push("volume-spike");
+
   return {
     id: `${ticker}-${win[0].date}`,
+    tags,
     pattern: `${ticker} · ${win[0].date} → ${win[MIN_GAP - 1].date}`,
     correct,
     revealAt: CONTEXT,
@@ -261,6 +271,56 @@ function buildScenario(ticker, bars, start, n) {
     indicatorNote,
     caution,
     source: { ticker, from: win[0].date, to: win[MIN_GAP - 1].date, move: round(move * 100) },
+  };
+}
+
+// ---------- famous moments ----------
+
+// Calls are made at the close of `call` (or the last session before it).
+const MOMENTS = [
+  { pack: "crashes", ticker: "QQQ", call: "2000-03-10", title: "The dot-com peak",
+    blurb: "March 2000: tech stocks had gone nearly vertical. The Nasdaq peaked that week and went on to lose most of its value over the next two and a half years." },
+  { pack: "crashes", ticker: "SPY", call: "2008-09-12", title: "The Lehman weekend",
+    blurb: "Friday, September 12, 2008. Over that weekend Lehman Brothers failed, and the financial crisis went from bad to historic." },
+  { pack: "crashes", ticker: "SPY", call: "2020-02-21", title: "The COVID crash",
+    blurb: "February 2020: the S&P 500 sat near record highs while the virus spread outside China. Within a month it had fallen about a third, the fastest drop of that size on record." },
+  { pack: "crashes", ticker: "SPY", call: "2022-01-03", title: "The 2022 top",
+    blurb: "The first trading day of 2022 marked the S&P 500's high as inflation surged and the Fed turned to rate hikes. A bear market followed." },
+  { pack: "manias", ticker: "GME", call: "2021-01-12", title: "The GameStop squeeze",
+    blurb: "January 2021: retail traders on Reddit piled into a heavily shorted video game retailer. What came next became one of the most famous short squeezes ever." },
+  { pack: "manias", ticker: "AMC", call: "2021-05-25", title: "AMC, round two",
+    blurb: "Late May 2021: the meme-stock crowd turned back to the movie theater chain, and it ran far beyond anything its business justified." },
+  { pack: "manias", ticker: "BTC-USD", call: "2017-12-15", title: "Bitcoin's 2017 top",
+    blurb: "December 2017: Bitcoin was everywhere, approaching $20,000 after a year-long mania. It peaked within days and spent the next year falling." },
+  { pack: "manias", ticker: "TSLA", call: "2020-11-16", title: "Tesla joins the S&P 500",
+    blurb: "After the close on November 16, 2020, S&P announced Tesla would join the index, forcing index funds to buy billions of dollars of the stock." },
+  { pack: "shocks", ticker: "META", call: "2022-02-02", title: "Meta's earnings collapse",
+    blurb: "After the close on February 2, 2022, Meta reported its first-ever drop in daily users. The next day erased more market value than any single day in US history at the time." },
+  { pack: "shocks", ticker: "NVDA", call: "2023-05-24", title: "NVIDIA's AI guidance",
+    blurb: "After the close on May 24, 2023, NVIDIA guided revenue far above expectations on demand for AI chips. The stock gapped up the next morning." },
+  { pack: "shocks", ticker: "NFLX", call: "2022-04-19", title: "Netflix loses subscribers",
+    blurb: "After the close on April 19, 2022, Netflix reported its first subscriber loss in over a decade. The stock fell by more than a third the next day." },
+  { pack: "shocks", ticker: "AAPL", call: "2020-03-20", title: "Apple at the COVID low",
+    blurb: "March 2020: panic selling hit everything. The market bottomed days later, and Apple led a recovery few saw coming." },
+];
+
+async function buildMoment(m) {
+  const callMs = Date.parse(`${m.call}T23:59:59Z`);
+  const day = 86_400_000;
+  const bars = mock
+    ? mockSeries(m.ticker)
+    : await fetchYahoo(m.ticker, { from: callMs - 200 * day, to: callMs + 60 * day });
+  let c = mock ? 600 : bars.findLastIndex((b) => b.date <= m.call);
+  const start = c - CONTEXT + 1;
+  if (c < 0 || start < 30 || c + FORWARD >= bars.length) throw new Error(`not enough data around ${m.call}`);
+  const sc = buildScenario(m.ticker, bars, start, bars.length);
+  return {
+    ...sc,
+    id: `moment-${m.ticker}-${m.call}`,
+    pack: m.pack,
+    pattern: m.title,
+    tags: ["moment", ...sc.tags],
+    source: { ...sc.source, title: m.title, blurb: m.blurb },
   };
 }
 
@@ -286,6 +346,23 @@ for (const ticker of tickers) {
 for (let i = scenarios.length - 1; i > 0; i--) {
   const j = Math.floor(rand() * (i + 1));
   [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];
+}
+
+const moments = [];
+if (!args.tickers) {
+  for (const m of MOMENTS) {
+    try {
+      moments.push(await buildMoment(m));
+      console.log(`✓ moment  ${m.title}`);
+    } catch (err) {
+      console.warn(`✗ moment  ${m.title}: ${err.message}`);
+    }
+    if (!mock) await sleep(400);
+  }
+  if (moments.length) {
+    await writeFile(resolve(here, "../src/data/moments.json"), JSON.stringify(moments));
+    console.log(`Wrote ${moments.length} Famous Moments to src/data/moments.json`);
+  }
 }
 
 if (!scenarios.length) {
