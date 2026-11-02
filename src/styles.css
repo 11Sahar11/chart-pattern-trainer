@@ -51,6 +51,9 @@
   }
 
   body {
+    /* No pull-to-refresh bounce inside the installed Android app. */
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
     background: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);

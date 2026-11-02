@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { ArrowDown, ArrowRight, ArrowUp, RotateCcw } from "lucide-react";
 import { PriceChart } from "@/components/price-chart";
 import { indicatorLabels, scenarios as practiceScenarios } from "@/lib/scenarios";
@@ -192,7 +193,7 @@ export function Trainer() {
               role="tab"
               aria-selected={mode === id}
               onClick={() => switchMode(id)}
-              className={`flex h-9 items-center gap-2 rounded-[5px] px-3 text-sm font-medium transition-colors ${
+              className={`flex h-11 items-center gap-2 rounded-[5px] px-3 md:h-9 text-sm font-medium transition-colors ${
                 mode === id ? "bg-fg text-bg" : "text-muted hover:text-fg"
               }`}
             >
@@ -215,7 +216,7 @@ export function Trainer() {
           type="button"
           onClick={resetScore}
           disabled={stats.total === 0}
-          className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-sm text-muted transition-colors hover:text-fg disabled:opacity-40 disabled:hover:text-muted"
+          className="ml-auto inline-flex h-11 items-center md:h-9 gap-1.5 rounded-md px-2 text-sm text-muted transition-colors hover:text-fg disabled:opacity-40 disabled:hover:text-muted"
         >
           <RotateCcw size={15} aria-hidden />
           Reset score
@@ -254,7 +255,7 @@ export function Trainer() {
                   type="button"
                   aria-pressed={on[id]}
                   onClick={() => setOn((s) => ({ ...s, [id]: !s[id] }))}
-                  className={`inline-flex h-8 items-center gap-2 rounded-md border px-2.5 text-xs font-medium transition-colors ${
+                  className={`inline-flex h-10 items-center gap-2 rounded-md border px-2.5 md:h-8 text-xs font-medium transition-colors ${
                     on[id]
                       ? "border-fg/40 bg-raised text-fg"
                       : "border-border text-muted hover:border-fg/30 hover:text-fg"
@@ -379,10 +380,15 @@ export function Trainer() {
         </aside>
       </main>
 
-      <p className="mt-6 text-xs text-muted">
-        A drill, not a broker. Practice setups are hand-drawn; real charts use Yahoo Finance daily
-        data rebased to 100. A correct call here is no reason to trade real money.
-      </p>
+      <footer className="mt-6 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 text-xs text-muted">
+        <p className="max-w-[70ch]">
+          A drill, not a broker. Practice setups are hand-drawn; real charts use Yahoo Finance daily
+          data rebased to 100. A correct call here is no reason to trade real money.
+        </p>
+        <Link to="/privacy" className="inline-flex min-h-11 items-center underline underline-offset-2 hover:text-fg md:min-h-0">
+          Privacy policy
+        </Link>
+      </footer>
     </div>
   );
 }
