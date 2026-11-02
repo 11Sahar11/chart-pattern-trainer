@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Snowflake } from "lucide-react";
 import { Stat } from "@/components/drill";
 import { patternForTag, tagLabels } from "@/lib/patterns";
-import { dateKey, liveStreak, useProgress, type DeckId } from "@/lib/progress";
+import { dateKey, liveStreak, resetDeck, useProgress, type DeckId } from "@/lib/progress";
+import { indicatorInfo } from "@/lib/indicators";
 import { scenarioById } from "@/lib/real-scenarios";
 
 export const Route = createFileRoute("/stats")({
@@ -104,6 +105,36 @@ function Stats() {
       )}
 
       <section>
+        <h2 className="text-lg font-bold [font-stretch:88%]">Indicator sense</h2>
+        <p className="mt-1 text-sm text-muted">
+          How often you chose right: turning an indicator on when it helped, leaving it off when it misled.
+        </p>
+        <ul className="mt-4 grid gap-x-8 gap-y-3 sm:grid-cols-2">
+          {indicatorInfo.map((info) => {
+            const t = p.byIndicator?.[info.id];
+            const pct = t && t.scored ? Math.round((t.right / t.scored) * 100) : null;
+            return (
+              <li key={info.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5">
+                <Link to="/indicators/$id" params={{ id: info.id }} className="flex items-center gap-2 text-sm font-medium hover:underline">
+                  <span aria-hidden className={`h-0.5 w-3.5 rounded-full ${info.swatch}`} />
+                  {info.short}
+                </Link>
+                <span className="text-sm tabular-nums text-muted">{t ? `${t.right}/${t.scored}${pct !== null ? ` · ${pct}%` : ""}` : "—"}</span>
+                <span className="col-span-2 h-2 overflow-hidden rounded-full bg-raised">
+                  {pct !== null && (
+                    <span
+                      className={`block h-full rounded-full ${pct >= 60 ? "bg-up" : pct >= 40 ? "bg-fg" : "bg-down"}`}
+                      style={{ width: `${Math.max(pct, 2)}%` }}
+                    />
+                  )}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
+
+      <section>
         <h2 className="text-lg font-bold [font-stretch:88%]">Accuracy by pattern and condition</h2>
         <p className="mt-1 text-sm text-muted">Shown once you have {MIN_SEEN} or more calls on it.</p>
         <ul className="mt-4 flex flex-col gap-3">
@@ -135,10 +166,20 @@ function Stats() {
           {decks
             .filter(([, d]) => d.total > 0)
             .map(([id, d]) => (
-              <li key={id} className="flex items-center justify-between px-4 py-3 text-sm">
+              <li key={id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3 text-sm">
                 <span className="font-medium">{deckNames[id]}</span>
-                <span className="tabular-nums text-muted">
-                  {d.correct}/{d.total} · {Math.round((d.correct / d.total) * 100)}% · best run {d.best}
+                <span className="flex items-center gap-3">
+                  <span className="tabular-nums text-muted">
+                    {d.correct}/{d.total} · {Math.round((d.correct / d.total) * 100)}% · best run {d.best}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => resetDeck(id)}
+                    className="min-h-11 rounded-md px-2 text-xs font-semibold text-muted hover:text-fg md:min-h-8"
+                    aria-label={`Reset ${deckNames[id]} score`}
+                  >
+                    Reset
+                  </button>
                 </span>
               </li>
             ))}

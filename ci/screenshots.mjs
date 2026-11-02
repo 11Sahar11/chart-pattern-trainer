@@ -32,6 +32,10 @@ async function go(page, path) {
 }
 
 async function call(page, label = "Higher") {
+  // Turn on the first offered indicator, then make the call.
+  const chip = page.locator('fieldset button[aria-pressed="false"]').first();
+  if (await chip.count()) await chip.click();
+  await page.waitForTimeout(300);
   await page.getByRole("button", { name: new RegExp(`^${label}`) }).first().click();
   await page.waitForTimeout(1800); // reveal plot + pencil ring
 }
@@ -42,9 +46,18 @@ for (const [name, viewport] of [
 ]) {
   const { ctx, page } = await session(name, viewport);
   await go(page, "/");
-  await shot(page, `${name}-01-home`);
+  for (let i = 1; i <= 3; i++) {
+    await shot(page, `${name}-00-welcome-${i}`, false);
+    await page.getByRole("button", { name: /^(Next|Call your first chart)/ }).click();
+    await page.waitForTimeout(500);
+  }
+  // What a phone shows without scrolling: chart and calls should both fit.
+  await shot(page, `${name}-01-home-first-screen`, false);
+  await shot(page, `${name}-01b-home-full`);
   await call(page, "Higher");
   await shot(page, `${name}-02-home-revealed`);
+  await page.getByText("Why it moved", { exact: true }).click();
+  await shot(page, `${name}-02b-revealed-why`);
 
   await go(page, "/daily");
   await shot(page, `${name}-03-daily`);
@@ -67,8 +80,14 @@ for (const [name, viewport] of [
   await go(page, "/patterns/bull-flag");
   await shot(page, `${name}-08-pattern-page`);
 
+  await go(page, "/indicators");
+  await shot(page, `${name}-08b-indicators`);
+  await go(page, "/indicators/macd");
+  await call(page, "Lower");
+  await shot(page, `${name}-08c-indicator-page`);
+
   await go(page, "/");
-  await page.getByRole("tab", { name: /Review misses/ }).click();
+  await page.selectOption("#deck", "review");
   await page.waitForTimeout(800);
   await shot(page, `${name}-09-review`);
 
@@ -81,6 +100,7 @@ for (const [name, viewport] of [
 {
   const { ctx, page } = await session("dark", { width: 390, height: 844 }, { colorScheme: "dark" });
   await go(page, "/");
+  await page.getByRole("button", { name: "Skip" }).click();
   await call(page, "Lower");
   await shot(page, "dark-phone-home-revealed");
   await go(page, "/daily");

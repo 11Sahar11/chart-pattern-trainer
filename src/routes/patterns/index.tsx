@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { patterns } from "@/lib/patterns";
+import { LearnTabs } from "@/components/learn-tabs";
 import { useProgress } from "@/lib/progress";
 
 export const Route = createFileRoute("/patterns/")({
@@ -21,6 +22,7 @@ function Patterns() {
   const progress = useProgress();
   return (
     <div className="flex flex-col gap-5">
+      <LearnTabs current="patterns" />
       <div>
         <h1 className="text-2xl font-bold tracking-tight [font-stretch:88%] md:text-3xl">Chart patterns</h1>
         <p className="mt-1 max-w-[60ch] text-sm text-muted">
