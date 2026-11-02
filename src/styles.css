@@ -1,31 +1,70 @@
 @import "tailwindcss";
 
+/* Chart-book paper: cool printed grid, blue-black ink, graphite and red pencil. */
 @theme {
-  --color-bg: #0b0f0e;
-  --color-surface: #141a18;
-  --color-raised: #1c2421;
-  --color-fg: #f2efe6;
-  --color-muted: #9aa39c;
-  --color-primary: #d4b36a;
-  --color-ink: #1a150c;
-  --color-up: #3ea878;
-  --color-down: #d15b4a;
-  --color-border: #2c3833;
-  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
-  --radius-lg: 1rem;
+  --color-bg: #eef2ec;
+  --color-surface: #f8faf6;
+  --color-raised: #e4ebe2;
+  --color-fg: #16213a;
+  --color-muted: #4f5b73;
+  --color-pencil: #5d636c;
+  --color-primary: #1f4fa3;
+  --color-on-primary: #f8faf6;
+  --color-up: #1c7348;
+  --color-down: #c0392b;
+  --color-sma: #1f4fa3;
+  --color-ema: #a65f00;
+  --color-border: #c6d4c4;
+  --color-grid: #d9e5d6;
+  --color-grid-major: #b9cfb8;
+  --font-sans: "Archivo", ui-sans-serif, system-ui, sans-serif;
+  --radius-lg: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0e1613;
+    --color-surface: #131d19;
+    --color-raised: #1a2621;
+    --color-fg: #e5eee7;
+    --color-muted: #a3b5aa;
+    --color-pencil: #9aa29d;
+    --color-primary: #8fb0ff;
+    --color-on-primary: #0e1613;
+    --color-up: #4cc38a;
+    --color-down: #f06b5a;
+    --color-sma: #8fb0ff;
+    --color-ema: #f0a64a;
+    --color-border: #2a3a33;
+    --color-grid: #1a2723;
+    --color-grid-major: #24372f;
+  }
 }
 
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color-scheme: light dark;
+    accent-color: var(--color-primary);
+    scrollbar-color: var(--color-border) transparent;
   }
 
   body {
     background: var(--color-bg);
     color: var(--color-fg);
     font-family: var(--font-sans);
+    font-feature-settings: "tnum" 1;
+  }
+
+  ::selection {
+    background: color-mix(in srgb, var(--color-primary) 22%, transparent);
+    color: var(--color-fg);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
 
   button:not(:disabled),
@@ -42,6 +81,51 @@
   p {
     text-wrap: pretty;
   }
+
+  kbd {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-stretch: 85%;
+  }
+}
+
+@layer components {
+  /* The page's printed grid: minor every 8px, major every 40px. */
+  .graph-paper {
+    background-color: var(--color-surface);
+    background-image:
+      linear-gradient(var(--color-grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-grid-major) 1px, transparent 1px),
+      linear-gradient(var(--color-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+    background-size:
+      40px 40px,
+      40px 40px,
+      8px 8px,
+      8px 8px;
+    background-position: -1px -1px;
+  }
+
+  .label {
+    font-size: 0.75rem;
+    font-stretch: 85%;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--color-muted);
+  }
+
+  /* Pencil ring drawn around the verdict on reveal. */
+  .pencil-ring path {
+    stroke-dasharray: 260;
+    stroke-dashoffset: 260;
+    animation: pencil-draw 520ms cubic-bezier(0.16, 1, 0.3, 1) 850ms forwards;
+  }
+}
+
+@keyframes pencil-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -49,6 +133,7 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
   }
 }

@@ -16,7 +16,8 @@ export const Route = createRootRoute({
         content:
           "Practice reading chart patterns and technical indicators, then call the next move.",
       },
-      { name: "theme-color", content: "#0b0f0e" },
+      { name: "theme-color", content: "#eef2ec", media: "(prefers-color-scheme: light)" },
+      { name: "theme-color", content: "#0e1613", media: "(prefers-color-scheme: dark)" },
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
@@ -27,7 +28,7 @@ export const Route = createRootRoute({
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,520;9..144,640&family=Outfit:wght@400;500;600&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..700&display=swap",
       },
     ],
   }),
