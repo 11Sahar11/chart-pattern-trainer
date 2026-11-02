@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { Scenario } from "@/lib/market";
 import { tagsFor } from "@/lib/patterns";
+import { detectAt } from "@/lib/candles";
 
 /** Everything the player builds up, kept in this browser only. */
 export type DeckId = "practice" | "real" | "review" | "moments" | "daily" | "pattern";
@@ -123,7 +124,8 @@ export function recordAnswer(
     recent: [...prev.recent, right].slice(-TALLY),
   };
   const byTag = { ...state.byTag };
-  for (const tag of tagsFor(scenario)) {
+  const candle = detectAt(scenario.candles, scenario.revealAt - 1);
+  for (const tag of [...tagsFor(scenario), ...(candle ? [`candle:${candle.pattern.slug}`] : [])]) {
     const t = byTag[tag] ?? { seen: 0, hit: 0 };
     byTag[tag] = { seen: t.seen + 1, hit: t.hit + (right ? 1 : 0) };
   }

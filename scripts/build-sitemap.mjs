@@ -12,6 +12,8 @@ const site = (process.env.VITE_SITE_URL ?? "").replace(/\/$/, "");
 const patternsSrc = await readFile(resolve(root, "src/lib/patterns.ts"), "utf8");
 const slugs = [...patternsSrc.matchAll(/slug: "([a-z0-9-]+)"/g)].map((m) => m[1]);
 const indicators = ["sma", "sma50", "ema", "bb", "volume", "obv", "rsi", "macd", "stoch"];
+const candleSrc = await readFile(resolve(root, "src/lib/candles.ts"), "utf8");
+const candles = [...candleSrc.matchAll(/slug: "([a-z0-9-]+)"/g)].map((m) => m[1]);
 const pages = [
   "/",
   "/daily",
@@ -20,6 +22,9 @@ const pages = [
   ...slugs.map((s) => `/patterns/${s}`),
   "/indicators",
   ...indicators.map((i) => `/indicators/${i}`),
+  "/candles",
+  "/candles/quiz",
+  ...candles.map((c) => `/candles/${c}`),
   "/privacy",
 ];
 

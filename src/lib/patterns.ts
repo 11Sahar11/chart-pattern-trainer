@@ -1,4 +1,5 @@
 import type { Scenario } from "@/lib/market";
+import { candlePatterns } from "@/lib/candles";
 
 export type Pattern = {
   slug: string;
@@ -222,6 +223,7 @@ export const tagLabels: Record<string, string> = {
   "volume-spike": "Volume spikes",
   moment: "Famous Moments",
   ...Object.fromEntries(patterns.map((p) => [p.slug, p.name])),
+  ...Object.fromEntries(candlePatterns.map((c) => [`candle:${c.slug}`, `${c.name} at the call`])),
 };
 
 export function tagsFor(s: Scenario): string[] {
