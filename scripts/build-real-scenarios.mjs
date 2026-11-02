@@ -288,6 +288,12 @@ for (let i = scenarios.length - 1; i > 0; i--) {
   [scenarios[i], scenarios[j]] = [scenarios[j], scenarios[i]];
 }
 
+if (!scenarios.length) {
+  console.error("\nNo setups built, so the existing data file was left as it is.");
+  console.error("Check your internet connection, or try again in a few minutes (Yahoo sometimes rate-limits).");
+  process.exit(1);
+}
+
 await mkdir(dirname(OUT), { recursive: true });
 await writeFile(OUT, JSON.stringify(scenarios));
 
