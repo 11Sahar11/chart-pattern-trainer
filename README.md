@@ -8,8 +8,14 @@ Score and streak stay in the browser. This is a drill, not a broker.
 
 ```bash
 npm install
-npm run dev
+npm run dev        # http://localhost:3000
 ```
+
+Stack: TanStack Start + React 19, Tailwind v4, lightweight-charts. Deployed on Vercel (Nitro `vercel` preset).
+No accounts, no database: scores live in the browser's localStorage.
+
+Other scripts: `npm run typecheck`, `npm run build`, `npm run assets` (icons, store and share images; needs `sharp`).
+Publishing to Google Play: see [store/GOOGLE_PLAY.md](store/GOOGLE_PLAY.md).
 
 ## Real charts from Yahoo Finance
 

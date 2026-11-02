@@ -11,19 +11,17 @@ function errorMessage(error: unknown): string {
 
 export function AppErrorComponent({ error }: ErrorComponentProps) {
   return (
-    <main
-      className={
-        "flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center " +
-        "bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50"
-      }
-    >
-      <span className="text-red-500" aria-hidden="true">
-        <TriangleAlert className="size-10" strokeWidth={2} />
-      </span>
-      <h1 className="text-lg font-semibold">Something went wrong</h1>
-      <p className="max-w-md text-sm break-words text-zinc-500 dark:text-zinc-400">
-        {errorMessage(error)}
-      </p>
+    <main className="flex min-h-svh flex-col items-center justify-center gap-3 px-6 text-center">
+      <TriangleAlert className="size-9 text-down" strokeWidth={2} aria-hidden />
+      <h1 className="text-xl font-bold [font-stretch:88%]">Something went wrong</h1>
+      <p className="max-w-md text-sm break-words text-muted">{errorMessage(error)}</p>
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        className="mt-2 min-h-11 rounded-md bg-fg px-4 font-semibold text-bg"
+      >
+        Reload
+      </button>
     </main>
   );
 }

@@ -53,6 +53,52 @@ function loadStats(mode: Mode): Stats {
   }
 }
 
+/** A shuffled pass through the deck, so the same setup never comes up twice in a row. */
+type DeckState = { order: number[]; pos: number };
+const deckKey = (mode: Mode) => `${statsKey(mode)}-deck`;
+
+function shuffled(n: number, avoidFirst?: number): number[] {
+  const a = Array.from({ length: n }, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  if (n > 1 && a[0] === avoidFirst) [a[0], a[1]] = [a[1], a[0]];
+  return a;
+}
+
+function loadDeck(mode: Mode, size: number): DeckState {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(deckKey(mode)) ?? "null") as DeckState | null;
+    if (
+      parsed &&
+      Array.isArray(parsed.order) &&
+      parsed.order.length === size &&
+      parsed.pos >= 0 &&
+      parsed.pos < size
+    ) {
+      return parsed;
+    }
+  } catch {
+    // fall through to a fresh shuffle
+  }
+  return { order: shuffled(size), pos: 0 };
+}
+
+function saveDeck(mode: Mode, deck: DeckState) {
+  try {
+    localStorage.setItem(deckKey(mode), JSON.stringify(deck));
+  } catch {
+    // ignore
+  }
+}
+
+function advance(d: DeckState): DeckState {
+  if (d.pos + 1 < d.order.length) return { order: d.order, pos: d.pos + 1 };
+  // Pass finished: reshuffle, never opening with the setup just played.
+  return { order: shuffled(d.order.length, d.order[d.pos]), pos: 0 };
+}
+
 function saveStats(mode: Mode, stats: Stats) {
   try {
     localStorage.setItem(statsKey(mode), JSON.stringify(stats));
@@ -63,7 +109,12 @@ function saveStats(mode: Mode, stats: Stats) {
 
 export function Trainer() {
   const [mode, setMode] = useState<Mode>("practice");
-  const [index, setIndex] = useState(0);
+  // Starts in a fixed order so server and client render the same first setup;
+  // the saved or shuffled order replaces it right after mount.
+  const [deckState, setDeckState] = useState<DeckState>({
+    order: practiceScenarios.map((_, i) => i),
+    pos: 0,
+  });
   const [phase, setPhase] = useState<"read" | "revealed">("read");
   const [pick, setPick] = useState<Direction | null>(null);
   const [stats, setStats] = useState<Stats>(emptyStats);
@@ -83,10 +134,12 @@ export function Trainer() {
     }
     setMode(saved);
     setStats(loadStats(saved));
+    setDeckState(loadDeck(saved, saved === "real" ? realScenarios.length : practiceScenarios.length));
   }, []);
 
   const deck = mode === "real" && realScenarios.length > 0 ? realScenarios : practiceScenarios;
   const realEmpty = mode === "real" && realScenarios.length === 0;
+  const index = deckState.order[deckState.pos] ?? 0;
   const scenario = deck[index % deck.length];
   const hit = pick === scenario.correct;
   const visibleCount = phase === "read" ? scenario.revealAt : scenario.candles.length;
@@ -95,7 +148,7 @@ export function Trainer() {
   function switchMode(next: Mode) {
     if (next === mode) return;
     setMode(next);
-    setIndex(0);
+    setDeckState(loadDeck(next, next === "real" && realScenarios.length > 0 ? realScenarios.length : practiceScenarios.length));
     setPhase("read");
     setPick(null);
     setStats(loadStats(next));
@@ -123,15 +176,17 @@ export function Trainer() {
         saveStats(mode, next);
         return next;
       });
+      // Answered: a reload should open the next setup, not this one again.
+      saveDeck(mode, advance(deckState));
     },
-    [phase, scenario, mode],
+    [phase, scenario, mode, deckState],
   );
 
   const nextSetup = useCallback(() => {
-    setIndex((n) => (n + 1) % deck.length);
+    setDeckState((d) => advance(d));
     setPhase("read");
     setPick(null);
-  }, [deck.length]);
+  }, []);
 
   function resetScore() {
     try {
@@ -235,7 +290,7 @@ export function Trainer() {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-3 py-2.5 md:px-4">
             <p className="text-sm">
               <span className="font-semibold tabular-nums">
-                Setup {index + 1}
+                Setup {deckState.pos + 1}
                 <span className="font-normal text-muted"> of {deck.length}</span>
               </span>
               <span className="text-muted">

@@ -90,3 +90,11 @@ for (const [rel, svg] of out) {
   await sharp(Buffer.from(svg)).png().toFile(file);
   console.log("✓", rel);
 }
+
+// Share card for links (1200×630): the feature graphic on a paper margin.
+await sharp(Buffer.from(featureGraphic()))
+  .resize(1200, 586)
+  .extend({ top: 22, bottom: 22, background: PAPER })
+  .png()
+  .toFile(resolve(root, "public/og.png"));
+console.log("✓ public/og.png");
