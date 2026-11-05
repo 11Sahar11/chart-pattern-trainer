@@ -328,6 +328,144 @@ export const scenarios: Scenario[] = [
       "Volume on the gap day dwarfed the sessions inside the range. The 20-day average, which had gone flat, was left underneath the gap and became a reference if the move was tested.",
     caution: "Gaps inside a range fill constantly. The context — leaving a congestion area — is what makes this one different.",
   },
+  {
+    id: "range-box",
+    pattern: "Trading range",
+    correct: "sideways",
+    revealAt: 60,
+    tags: ["range"],
+    guides: [
+      { price: 108, title: "Range high" },
+      { price: 96, title: "Range low" },
+    ],
+    useful: [],
+    candles: buildCandles(
+      swing(
+        [
+          [0, 102],
+          [10, 107.4],
+          [20, 97.2],
+          [30, 106.8],
+          [40, 97.8],
+          [50, 105.6],
+          [59, 101.4],
+          [68, 106.9],
+          [76, 97.6],
+          [84, 101.8],
+        ],
+        101,
+        0.45,
+      ),
+      101,
+    ),
+    explanation:
+      "Price spent the whole window bouncing between about 97 and 108, and the call came in the middle of that box. The next sessions kept oscillating and finished almost where they started. There was no break, so there was no edge.",
+    indicatorNote:
+      "A flat average and ordinary volume describe a range. A trend tool that points up or down here is reading one swing, not the chart.",
+    caution:
+      "No edge means it has not broken yet. The next close outside the box is a new chart, not a reason to have guessed.",
+  },
+  {
+    id: "tight-coil",
+    pattern: "Volatility coil",
+    correct: "sideways",
+    revealAt: 60,
+    tags: ["range"],
+    guides: [{ price: 100, title: "Coil" }],
+    useful: [],
+    candles: buildCandles(
+      swing(
+        [
+          [0, 100.2],
+          [12, 101.1],
+          [24, 99.2],
+          [36, 100.7],
+          [48, 99.4],
+          [59, 100.1],
+          [70, 100.6],
+          [84, 99.9],
+        ],
+        113,
+        0.25,
+      ),
+      113,
+    ),
+    explanation:
+      "Daily ranges had already shrunk to a narrow band around 100, and neither side was winning. After the call the coil kept going and the net move was a fraction of a percent. Compressed price is not a direction.",
+    indicatorNote:
+      "Momentum sits near the middle and the averages are flat. Indicators that need a trend have nothing to say until the coil breaks.",
+    caution:
+      "Coils do break. Calling no edge is about this chart, not a promise that the next one stays quiet.",
+  },
+  {
+    id: "two-way-chop",
+    pattern: "Two-way chop",
+    correct: "sideways",
+    revealAt: 60,
+    tags: ["range"],
+    guides: [
+      { price: 112, title: "Swing high" },
+      { price: 88, title: "Swing low" },
+    ],
+    useful: [],
+    candles: buildCandles(
+      swing(
+        [
+          [0, 100],
+          [8, 111.5],
+          [16, 100],
+          [24, 89],
+          [32, 100.5],
+          [40, 110.5],
+          [48, 100],
+          [56, 90.5],
+          [59, 96.2],
+          [68, 103.5],
+          [76, 94],
+          [84, 97.4],
+        ],
+        127,
+        0.5,
+      ),
+      127,
+    ),
+    explanation:
+      "Wide swings both ways cancelled out. At the call, price was back in the middle after a dip that held the prior low. The following sessions swung again and settled nearby. Big candles are not an edge when they undo each other.",
+    indicatorNote:
+      "Oscillators whip from high to low with every swing, so a reading at one extreme is just where this swing happens to be.",
+    caution:
+      "Chop can turn into a trend without warning. The call is only about whether this window had a direction.",
+  },
+  {
+    id: "flat-base",
+    pattern: "Flat base",
+    correct: "sideways",
+    revealAt: 60,
+    tags: ["range"],
+    guides: [{ price: 100, title: "Base" }],
+    useful: [],
+    candles: buildCandles(
+      swing(
+        [
+          [0, 100],
+          [15, 102.8],
+          [30, 99.1],
+          [45, 102.2],
+          [59, 100.6],
+          [72, 99.4],
+          [84, 100.5],
+        ],
+        131,
+        0.35,
+      ),
+      131,
+    ),
+    explanation:
+      "After arriving near 100, price built a flat base and never left it. The call sits inside that base, and the next month stays inside it too. A base is a place where higher and lower are both guesses.",
+    indicatorNote:
+      "Price hugging a flat average is the definition of no trend. Volume never expanded enough to say accumulation or distribution.",
+    caution: "Bases break up and down. Until one side actually leaves, no edge is the read.",
+  },
 ];
 
 export const indicatorLabels: Record<Scenario["useful"][number], string> = {

@@ -47,9 +47,13 @@ function Pack() {
       </div>
 
       {items.length === 0 ? (
-        <p className="rounded-md border border-border bg-surface px-4 py-3 text-sm text-muted">
-          This pack is built with the real-chart data. Run <code className="font-semibold text-fg">npm run data:yahoo</code> once.
-        </p>
+        <div className="flex flex-col items-start gap-3 rounded-lg border border-border bg-surface px-5 py-10">
+          <h2 className="text-xl font-bold [font-stretch:88%]">This pack is empty</h2>
+          <p className="max-w-[48ch] text-sm text-muted">There are no charts in {pack.name} right now.</p>
+          <Link to="/moments" className="inline-flex min-h-11 items-center rounded-md bg-fg px-4 font-semibold text-bg">
+            All moments
+          </Link>
+        </div>
       ) : pos === null ? (
         <div className="min-h-[50svh]" aria-busy="true" />
       ) : current ? (

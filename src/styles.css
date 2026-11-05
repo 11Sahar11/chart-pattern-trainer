@@ -113,6 +113,15 @@
     background-position: -1px -1px;
   }
 
+  /* TradingView's logo ships in the bottom-left, on top of the candles.
+     Park it in the empty top band the price scale already leaves open. */
+  .price-chart a#tv-attr-logo {
+    top: 6px !important;
+    bottom: auto !important;
+    left: 8px !important;
+    right: auto !important;
+  }
+
   .label {
     font-size: 0.75rem;
     font-stretch: 85%;

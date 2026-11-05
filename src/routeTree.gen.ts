@@ -13,6 +13,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as DailyRouteImport } from './routes/daily'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as StatsRouteImport } from './routes/stats'
+import { Route as CandlesIndexRouteImport } from './routes/candles/index'
+import { Route as CandlesSlugRouteImport } from './routes/candles/$slug'
+import { Route as CandlesQuizRouteImport } from './routes/candles/quiz'
+import { Route as IndicatorsIndexRouteImport } from './routes/indicators/index'
+import { Route as IndicatorsIdRouteImport } from './routes/indicators/$id'
 import { Route as MomentsIndexRouteImport } from './routes/moments/index'
 import { Route as MomentsPackRouteImport } from './routes/moments/$pack'
 import { Route as PatternsIndexRouteImport } from './routes/patterns/index'
@@ -36,6 +41,31 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const StatsRoute = StatsRouteImport.update({
   id: '/stats',
   path: '/stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CandlesIndexRoute = CandlesIndexRouteImport.update({
+  id: '/candles/',
+  path: '/candles/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CandlesSlugRoute = CandlesSlugRouteImport.update({
+  id: '/candles/$slug',
+  path: '/candles/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CandlesQuizRoute = CandlesQuizRouteImport.update({
+  id: '/candles/quiz',
+  path: '/candles/quiz',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndicatorsIndexRoute = IndicatorsIndexRouteImport.update({
+  id: '/indicators/',
+  path: '/indicators/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndicatorsIdRoute = IndicatorsIdRouteImport.update({
+  id: '/indicators/$id',
+  path: '/indicators/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MomentsIndexRoute = MomentsIndexRouteImport.update({
@@ -64,8 +94,13 @@ export interface FileRoutesByFullPath {
   '/daily': typeof DailyRoute
   '/privacy': typeof PrivacyRoute
   '/stats': typeof StatsRoute
+  '/candles/$slug': typeof CandlesSlugRoute
+  '/candles/quiz': typeof CandlesQuizRoute
+  '/indicators/$id': typeof IndicatorsIdRoute
   '/moments/$pack': typeof MomentsPackRoute
   '/patterns/$slug': typeof PatternsSlugRoute
+  '/candles/': typeof CandlesIndexRoute
+  '/indicators/': typeof IndicatorsIndexRoute
   '/moments/': typeof MomentsIndexRoute
   '/patterns/': typeof PatternsIndexRoute
 }
@@ -74,8 +109,13 @@ export interface FileRoutesByTo {
   '/daily': typeof DailyRoute
   '/privacy': typeof PrivacyRoute
   '/stats': typeof StatsRoute
+  '/candles/$slug': typeof CandlesSlugRoute
+  '/candles/quiz': typeof CandlesQuizRoute
+  '/indicators/$id': typeof IndicatorsIdRoute
   '/moments/$pack': typeof MomentsPackRoute
   '/patterns/$slug': typeof PatternsSlugRoute
+  '/candles': typeof CandlesIndexRoute
+  '/indicators': typeof IndicatorsIndexRoute
   '/moments': typeof MomentsIndexRoute
   '/patterns': typeof PatternsIndexRoute
 }
@@ -85,8 +125,13 @@ export interface FileRoutesById {
   '/daily': typeof DailyRoute
   '/privacy': typeof PrivacyRoute
   '/stats': typeof StatsRoute
+  '/candles/$slug': typeof CandlesSlugRoute
+  '/candles/quiz': typeof CandlesQuizRoute
+  '/indicators/$id': typeof IndicatorsIdRoute
   '/moments/$pack': typeof MomentsPackRoute
   '/patterns/$slug': typeof PatternsSlugRoute
+  '/candles/': typeof CandlesIndexRoute
+  '/indicators/': typeof IndicatorsIndexRoute
   '/moments/': typeof MomentsIndexRoute
   '/patterns/': typeof PatternsIndexRoute
 }
@@ -97,8 +142,13 @@ export interface FileRouteTypes {
     | '/daily'
     | '/privacy'
     | '/stats'
+    | '/candles/$slug'
+    | '/candles/quiz'
+    | '/indicators/$id'
     | '/moments/$pack'
     | '/patterns/$slug'
+    | '/candles/'
+    | '/indicators/'
     | '/moments/'
     | '/patterns/'
   fileRoutesByTo: FileRoutesByTo
@@ -107,8 +157,13 @@ export interface FileRouteTypes {
     | '/daily'
     | '/privacy'
     | '/stats'
+    | '/candles/$slug'
+    | '/candles/quiz'
+    | '/indicators/$id'
     | '/moments/$pack'
     | '/patterns/$slug'
+    | '/candles'
+    | '/indicators'
     | '/moments'
     | '/patterns'
   id:
@@ -117,8 +172,13 @@ export interface FileRouteTypes {
     | '/daily'
     | '/privacy'
     | '/stats'
+    | '/candles/$slug'
+    | '/candles/quiz'
+    | '/indicators/$id'
     | '/moments/$pack'
     | '/patterns/$slug'
+    | '/candles/'
+    | '/indicators/'
     | '/moments/'
     | '/patterns/'
   fileRoutesById: FileRoutesById
@@ -128,8 +188,13 @@ export interface RootRouteChildren {
   DailyRoute: typeof DailyRoute
   PrivacyRoute: typeof PrivacyRoute
   StatsRoute: typeof StatsRoute
+  CandlesSlugRoute: typeof CandlesSlugRoute
+  CandlesQuizRoute: typeof CandlesQuizRoute
+  IndicatorsIdRoute: typeof IndicatorsIdRoute
   MomentsPackRoute: typeof MomentsPackRoute
   PatternsSlugRoute: typeof PatternsSlugRoute
+  CandlesIndexRoute: typeof CandlesIndexRoute
+  IndicatorsIndexRoute: typeof IndicatorsIndexRoute
   MomentsIndexRoute: typeof MomentsIndexRoute
   PatternsIndexRoute: typeof PatternsIndexRoute
 }
@@ -162,6 +227,41 @@ declare module '@tanstack/react-router' {
       path: '/stats'
       fullPath: '/stats'
       preLoaderRoute: typeof StatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/candles/': {
+      id: '/candles/'
+      path: '/candles'
+      fullPath: '/candles/'
+      preLoaderRoute: typeof CandlesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/candles/$slug': {
+      id: '/candles/$slug'
+      path: '/candles/$slug'
+      fullPath: '/candles/$slug'
+      preLoaderRoute: typeof CandlesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/candles/quiz': {
+      id: '/candles/quiz'
+      path: '/candles/quiz'
+      fullPath: '/candles/quiz'
+      preLoaderRoute: typeof CandlesQuizRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/indicators/': {
+      id: '/indicators/'
+      path: '/indicators'
+      fullPath: '/indicators/'
+      preLoaderRoute: typeof IndicatorsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/indicators/$id': {
+      id: '/indicators/$id'
+      path: '/indicators/$id'
+      fullPath: '/indicators/$id'
+      preLoaderRoute: typeof IndicatorsIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/moments/': {
@@ -200,8 +300,13 @@ const rootRouteChildren: RootRouteChildren = {
   DailyRoute: DailyRoute,
   PrivacyRoute: PrivacyRoute,
   StatsRoute: StatsRoute,
+  CandlesSlugRoute: CandlesSlugRoute,
+  CandlesQuizRoute: CandlesQuizRoute,
+  IndicatorsIdRoute: IndicatorsIdRoute,
   MomentsPackRoute: MomentsPackRoute,
   PatternsSlugRoute: PatternsSlugRoute,
+  CandlesIndexRoute: CandlesIndexRoute,
+  IndicatorsIndexRoute: IndicatorsIndexRoute,
   MomentsIndexRoute: MomentsIndexRoute,
   PatternsIndexRoute: PatternsIndexRoute,
 }

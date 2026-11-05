@@ -145,6 +145,7 @@ export function Drill({
     .filter((r): r is boolean => r !== null);
 
   return (
+    <>
     <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-4">
       <div className="overflow-hidden rounded-lg border border-border bg-surface">
         <p className="truncate border-b border-border px-3 py-2 text-sm md:px-4">
@@ -338,6 +339,30 @@ export function Drill({
         )}
       </aside>
     </div>
+    {phase === "revealed" && (
+      <div
+        className="fixed inset-x-0 z-40 border-t border-border bg-surface/95 px-3 py-2 backdrop-blur-sm md:hidden"
+        style={{ bottom: "calc(4rem + env(safe-area-inset-bottom))" }}
+      >
+        <div className="mx-auto flex max-w-md items-center gap-2">
+          <p className={`shrink-0 text-base font-bold [font-stretch:88%] ${hit ? "text-up" : "text-down"}`}>
+            {hit ? "Hit" : "Miss"}
+          </p>
+          <p className="min-w-0 flex-1 truncate text-xs text-muted">
+            Called {labelFor(pick)} · went {labelFor(scenario.correct)}
+          </p>
+          <button
+            type="button"
+            onClick={onNext}
+            className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-md bg-fg px-3 text-sm font-semibold text-bg"
+          >
+            {nextLabel}
+            <ArrowRight size={15} aria-hidden />
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
 
