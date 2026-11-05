@@ -71,6 +71,68 @@ function round(n: number) {
   return Math.round(n * 100) / 100;
 }
 
+function seedFrom(id: string) {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
+/** Weekday dates immediately before `end` (YYYY-MM-DD), oldest first. */
+function businessDaysBefore(end: string, count: number): string[] {
+  const d = new Date(`${end}T00:00:00Z`);
+  const out: string[] = [];
+  while (out.length < count) {
+    d.setUTCDate(d.getUTCDate() - 1);
+    const day = d.getUTCDay();
+    if (day !== 0 && day !== 6) out.push(d.toISOString().slice(0, 10));
+  }
+  out.reverse();
+  return out;
+}
+
+/**
+ * Prepend plausible sessions so `revealAt` reaches `minVisible`.
+ * The call, the outcome, and the existing candles stay put. Used when a lesson
+ * needs a longer average than the textbook setup was drawn with.
+ */
+export function extendHistory(s: Scenario, minVisible: number): Scenario {
+  if (minVisible <= s.revealAt || s.candles.length === 0) return s;
+  const need = minVisible - s.revealAt;
+  const first = s.candles[0];
+  const look = Math.min(5, s.candles.length - 1);
+  const later = s.candles[look].close;
+  const forward = look === 0 ? 0 : (later - first.close) / look;
+  const rand = mulberry32(seedFrom(s.id));
+  const span = Math.max(0.25, Math.abs(first.close) * 0.004);
+  const backward: Candle[] = [];
+  let close = first.open;
+  for (let i = 0; i < need; i++) {
+    const next = close;
+    const open = next - forward + (rand() - 0.5) * span;
+    const top = Math.max(open, next);
+    const bot = Math.min(open, next);
+    const pad = Math.max(0.15, Math.abs(next - open) * 0.35 + 0.2);
+    backward.push({
+      time: "",
+      open: round(open),
+      high: round(top + pad * (0.35 + rand() * 0.9)),
+      low: round(bot - pad * (0.35 + rand() * 0.9)),
+      close: round(next),
+      volume: Math.round((0.7 + rand() * 0.6) * 1_100_000),
+    });
+    close = open;
+  }
+  backward.reverse();
+  const times = businessDaysBefore(first.time, need);
+  for (let i = 0; i < backward.length; i++) {
+    const c = backward[i];
+    c.time = times[i];
+    c.high = round(Math.max(c.high, c.open, c.close));
+    c.low = round(Math.min(c.low, c.open, c.close));
+  }
+  return { ...s, revealAt: s.revealAt + need, candles: [...backward, ...s.candles] };
+}
+
 function businessDay(start: Date, offset: number) {
   const d = new Date(start);
   let left = offset;

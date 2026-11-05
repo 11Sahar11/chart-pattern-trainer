@@ -115,7 +115,9 @@ export function Trainer() {
 
   const tabs: [Mode, string, number][] = [
     ["practice", "Practice", practiceScenarios.length],
-    ["real", "Real charts", realScenarios.length],
+    ...(realScenarios.length > 0
+      ? [["real", "Real charts", realScenarios.length] as [Mode, string, number]]
+      : []),
     ["review", "Review misses", missCount],
   ];
 
@@ -153,13 +155,6 @@ export function Trainer() {
           </Link>
         </div>
       </div>
-
-      {mode === "real" && realScenarios.length === 0 && (
-        <p className="rounded-md border border-border bg-surface px-4 py-3 text-sm text-muted">
-          No real charts yet. Run <code className="font-semibold text-fg">npm run data:yahoo</code> once to pull
-          daily candles from Yahoo Finance. Practice setups are showing meanwhile.
-        </p>
-      )}
 
       {scenario ? (
         <Drill

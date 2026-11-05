@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Share2, Snowflake } from "lucide-react";
 import { Drill, Tally } from "@/components/drill";
-import { scenarios as practiceScenarios } from "@/lib/scenarios";
-import { realScenarios } from "@/lib/real-scenarios";
+import { buildDailySet } from "@/lib/daily-set";
 import type { Scenario } from "@/lib/market";
 import { DAILY_SIZE, dateKey, daysBetween, liveStreak, recordDaily, useProgress } from "@/lib/progress";
 import { shareText } from "@/lib/share";
@@ -24,28 +23,6 @@ export const Route = createFileRoute("/daily")({
   component: Daily,
 });
 
-function mulberry32(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/** The same five charts for every player on a given date. */
-function dailySet(dayNumber: number): Scenario[] {
-  const pool = realScenarios.length >= 30 ? realScenarios : [...practiceScenarios, ...realScenarios];
-  const rand = mulberry32(dayNumber * 2654435761);
-  const idx = pool.map((_, i) => i);
-  for (let i = idx.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [idx[i], idx[j]] = [idx[j], idx[i]];
-  }
-  return idx.slice(0, DAILY_SIZE).map((i) => pool[i]);
-}
-
 function Daily() {
   const progress = useProgress();
   // The date is only known in the browser; render nothing date-specific on the server.
@@ -55,7 +32,7 @@ function Daily() {
   useEffect(() => setToday(dateKey()), []);
 
   const dayNumber = today ? daysBetween(FIRST_DAY, today) + 1 : 0;
-  const set = useMemo(() => (dayNumber ? dailySet(dayNumber) : []), [dayNumber]);
+  const set = useMemo(() => (dayNumber ? buildDailySet(dayNumber) : []), [dayNumber]);
   const results = today ? (progress.daily[today] ?? []) : [];
 
   // Resume where the player left off, once saved progress is available.

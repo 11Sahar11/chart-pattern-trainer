@@ -4,6 +4,7 @@ import {
   macd,
   obv,
   rsi,
+  extendHistory,
   sma,
   stochastic,
   type Candle,
@@ -212,6 +213,48 @@ function at<T extends { time: string; value: number }>(rows: T[], time: string):
 function before<T extends { time: string; value: number }>(rows: T[], time: string, back: number) {
   const i = rows.findIndex((r) => r.time === time);
   return i - back >= 0 ? rows[i - back].value : undefined;
+}
+
+/**
+ * Visible candles required before the read at the call is meaningful.
+ * SMA 50 needs 50 closes plus 5 more sessions so its slope can be judged.
+ */
+export function barsNeeded(id: IndicatorId): number {
+  switch (id) {
+    case "sma50":
+      return 55;
+    case "macd":
+      return 35;
+    case "sma":
+      return 25;
+    case "bb":
+      return 20;
+    case "stoch":
+      return 18;
+    case "rsi":
+      return 16;
+    case "ema":
+    case "obv":
+      return 12;
+    case "volume":
+      return 6;
+  }
+}
+
+/** Charts a lesson can actually draw this indicator on. Short setups gain leading history. */
+export function chartsForLesson(id: IndicatorId, scenarios: Scenario[]): Scenario[] {
+  const min = barsNeeded(id);
+  const prepared = scenarios.map((s) => {
+    if (availableOn(s, id)) return s;
+    let extra = min;
+    let next = extendHistory(s, extra);
+    while (!availableOn(next, id) && extra < min + 40) {
+      extra += 5;
+      next = extendHistory(s, extra);
+    }
+    return next;
+  });
+  return prepared.filter((s) => availableOn(s, id));
 }
 
 /** Each indicator's read at the last visible candle. Cached per scenario. */

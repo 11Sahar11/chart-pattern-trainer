@@ -75,16 +75,21 @@ export function PriceChart({ candles, visibleCount, active, guides, markerTime, 
     const primary = cssVar("--color-primary", "#1f4fa3");
     const font = getComputedStyle(document.body).fontFamily;
 
+    const paper = cssVar("--color-surface", "#f8faf6");
+    const grid = cssVar("--color-grid", "#d9e5d6");
     const base = {
       autoSize: true,
       layout: {
-        // Transparent so the page's printed grid shows through.
-        background: { type: ColorType.Solid, color: "transparent" },
+        background: { type: ColorType.Solid, color: paper },
         textColor: muted,
         fontFamily: font,
         fontSize: 11,
+        attributionLogo: true,
       },
-      grid: { vertLines: { visible: false }, horzLines: { visible: false } },
+      grid: {
+        vertLines: { color: grid },
+        horzLines: { color: grid },
+      },
       rightPriceScale: { borderColor: border },
       crosshair: {
         mode: CrosshairMode.Normal,
@@ -159,6 +164,7 @@ export function PriceChart({ candles, visibleCount, active, guides, markerTime, 
       if (!host) continue;
       const pane = createChart(host, {
         ...base,
+        layout: { ...base.layout, attributionLogo: false },
         timeScale: { borderColor: border, visible: false, fixLeftEdge: true },
         handleScroll: false,
         handleScale: false,
@@ -214,7 +220,7 @@ export function PriceChart({ candles, visibleCount, active, guides, markerTime, 
           position: "aboveBar",
           color: ink,
           shape: "arrowDown",
-          text: highlight ? `Call · ${highlight.label}` : "Call",
+          text: "",
         });
         if (highlight?.times.includes(markerTime)) {
           marks.push({ time: markerTime, position: "belowBar", color: primary, shape: "circle", text: "" });
@@ -258,14 +264,23 @@ export function PriceChart({ candles, visibleCount, active, guides, markerTime, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candles, visibleCount, activeKey, markerTime, guides, highlight?.label]);
 
+  const callLabel = highlight ? `Call · ${highlight.label}` : "Call";
+
   return (
-    <div className="graph-paper flex flex-col">
-      <div
-        ref={priceRef}
-        className="h-[min(42svh,320px)] w-full md:h-[440px]"
-        role="img"
-        aria-label={`Candlestick chart, ${visibleCount} of ${candles.length} days shown`}
-      />
+    <div className="price-chart flex flex-col bg-surface">
+      <div className="relative">
+        <div
+          ref={priceRef}
+          className="h-[min(42svh,320px)] w-full md:h-[440px]"
+          role="img"
+          aria-label={`Candlestick chart, ${visibleCount} of ${candles.length} days shown`}
+        />
+        {markerTime && (
+          <p className="pointer-events-none absolute top-1.5 left-12 z-10 max-w-[58%] truncate rounded bg-surface/95 px-1.5 py-0.5 text-[11px] font-semibold leading-none">
+            {callLabel}
+          </p>
+        )}
+      </div>
       {panes.map((id) => (
         <div key={id} className="border-t border-border">
           <p className="label px-3 pt-1.5">{infoById.get(id)?.short}</p>

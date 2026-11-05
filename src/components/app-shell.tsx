@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
 import { BookOpen, CalendarCheck, ChartCandlestick, ChartColumn, Flame, History } from "lucide-react";
+import { moments } from "@/lib/real-scenarios";
 import { DAILY_SIZE, dateKey, liveStreak, useProgress } from "@/lib/progress";
 
 const nav = [
@@ -51,6 +52,7 @@ function isActive(to: string, path: string) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const items = nav.filter((item) => item.to !== "/moments" || moments.length > 0);
   return (
     <div className="flex min-h-svh flex-col">
       <header className="border-b border-border bg-bg/95 pt-[env(safe-area-inset-top)] backdrop-blur-sm md:sticky md:top-0 md:z-20">
@@ -61,7 +63,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Link>
           <div className="flex items-center gap-3">
           <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
-            {nav.map(({ to, label }) => (
+            {items.map(({ to, label }) => (
               <Link
                 key={to}
                 to={to}
@@ -101,8 +103,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         aria-label="Main"
         className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden"
       >
-        <ul className="mx-auto grid max-w-md grid-cols-5">
-          {nav.map(({ to, label, icon: Icon }) => {
+        <ul className={`mx-auto grid max-w-md ${items.length >= 5 ? "grid-cols-5" : "grid-cols-4"}`}>
+          {items.map(({ to, label, icon: Icon }) => {
             const active = isActive(to, path);
             return (
               <li key={to}>

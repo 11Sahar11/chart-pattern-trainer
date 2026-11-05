@@ -104,7 +104,7 @@ export const candlePatterns: CandlePattern[] = [
     ],
     context: "Strongest at resistance or after an extended run. Same shape after a decline is an inverted hammer.",
     failure: "A close above the shooting star's high cancels it.",
-    example: [[72, 92, 71, 70]],
+    example: [[72, 92, 69, 70]],
   },
   {
     slug: "doji",
@@ -472,14 +472,22 @@ export function exampleCandles(p: CandlePattern, jitter?: () => number): Candle[
     lead.push([o, Math.max(o, c) + 2, Math.min(o, c) - 2, c]);
     level = c;
   }
+  // Scale the body and the wicks separately, then keep the wicks outside the body.
+  // Independent scales used to push open or close past high or low.
   const scale = (ohlc: Ohlc): Ohlc => {
     const [o, h, l, c] = ohlc;
     const mid = (o + c) / 2;
     const s = j();
     const w = j();
-    const top = Math.max(o, c);
-    const bot = Math.min(o, c);
-    return [mid + (o - mid) * s, top + (h - top) * w, bot - (bot - l) * w, mid + (c - mid) * s];
+    const newO = mid + (o - mid) * s;
+    const newC = mid + (c - mid) * s;
+    const top = Math.max(newO, newC);
+    const bot = Math.min(newO, newC);
+    const origTop = Math.max(o, c);
+    const origBot = Math.min(o, c);
+    const newH = top + Math.max(0, h - origTop) * w;
+    const newL = bot - Math.max(0, origBot - l) * w;
+    return [newO, Math.max(newH, top), Math.min(newL, bot), newC];
   };
   return [...lead, ...p.example.map(scale)].map(([o, h, l, c], i) => ({
     time: `2024-01-${String(i + 1).padStart(2, "0")}`,

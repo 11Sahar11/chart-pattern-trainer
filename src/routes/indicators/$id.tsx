@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Drill } from "@/components/drill";
-import { availableOn, indicatorInfo, infoById } from "@/lib/indicators";
+import { chartsForLesson, indicatorInfo, infoById } from "@/lib/indicators";
 import { scenarios as practiceScenarios } from "@/lib/scenarios";
 import { realScenarios } from "@/lib/real-scenarios";
 import type { IndicatorId } from "@/lib/market";
@@ -28,12 +28,12 @@ export const Route = createFileRoute("/indicators/$id")({
 
 function IndicatorPage() {
   const { info } = Route.useLoaderData();
-  // Only charts long enough to draw this indicator (SMA 50 needs 50 candles).
-  const pool = useMemo(() => {
-    const all = [...practiceScenarios, ...realScenarios.slice(0, 60)];
-    const ok = all.filter((s) => availableOn(s, info.id));
-    return ok.length ? ok : all;
-  }, [info.id]);
+  // Only charts long enough to draw this indicator. Short textbook setups
+  // gain leading history so SMA 50 (and MACD) are real lines, not empty.
+  const pool = useMemo(
+    () => chartsForLesson(info.id, [...practiceScenarios, ...realScenarios.slice(0, 60)]),
+    [info.id],
+  );
   // Start somewhere stable per indicator so server and client render the same chart.
   const start = indicatorInfo.findIndex((i) => i.id === info.id) * 3;
   const [n, setN] = useState(0);
