@@ -75,6 +75,9 @@ function Pack() {
           <p className="text-lg font-semibold">
             {right === items.length ? "You'd have called every one." : "Hindsight is easier than the hard right edge."}
           </p>
+          <Link to="/daily" className="text-sm font-semibold text-primary">
+            Today's Daily Chart
+          </Link>
           <div className="mt-2 flex flex-wrap gap-2">
             <button
               type="button"

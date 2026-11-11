@@ -5,6 +5,13 @@ import { Drill, Tally } from "@/components/drill";
 import { buildDailySet } from "@/lib/daily-set";
 import type { Scenario } from "@/lib/market";
 import { DAILY_SIZE, dateKey, daysBetween, liveStreak, recordDaily, useProgress } from "@/lib/progress";
+import {
+  dismissReminder,
+  enableDailyReminder,
+  noteDailyDone,
+  reminderChoice,
+  type ReminderChoice,
+} from "@/lib/reminder";
 import { shareText } from "@/lib/share";
 
 /** Daily #1 is the launch day. */
@@ -35,6 +42,10 @@ function Daily() {
   const set = useMemo(() => (dayNumber ? buildDailySet(dayNumber) : []), [dayNumber]);
   const results = today ? (progress.daily[today] ?? []) : [];
 
+  useEffect(() => {
+    if (today && results.length >= DAILY_SIZE) void noteDailyDone(today);
+  }, [today, results.length]);
+
   // Resume where the player left off, once saved progress is available.
   useEffect(() => {
     if (today && view === null) setView(Math.min(results.length, DAILY_SIZE));
@@ -46,11 +57,8 @@ function Daily() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight [font-stretch:88%] md:text-3xl">Daily Chart #{dayNumber}</h1>
-          <p className="mt-1 text-sm text-muted">Five charts, the same for everyone today. New set at midnight.</p>
-        </div>
+      <div className="flex items-end justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight [font-stretch:88%] md:text-3xl">Daily Chart #{dayNumber}</h1>
         <Tally recent={results} size={DAILY_SIZE} />
       </div>
 
@@ -105,7 +113,7 @@ function Summary({
 
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_340px]">
-      <section className="graph-paper flex flex-col gap-5 rounded-lg border border-border px-5 py-8 md:px-8">
+      <section className="graph-paper flex flex-col gap-4 rounded-lg border border-border px-5 py-5 md:px-8 md:py-8">
         <div>
           <p className="text-5xl font-bold tabular-nums [font-stretch:88%] md:text-6xl">
             {hits}
@@ -115,7 +123,7 @@ function Summary({
         </div>
         <ol className="flex flex-col gap-2">
           {set.map((s, i) => (
-            <li key={s.id} className="flex items-center gap-3 rounded-md border border-border bg-surface px-3 py-2.5 text-sm">
+            <li key={s.id} className="flex items-center gap-3 rounded-md border border-border bg-surface px-3 py-1.5 text-sm">
               <span
                 aria-label={results[i] ? "Hit" : "Miss"}
                 className={`h-3.5 w-3.5 shrink-0 rounded-[2px] border ${results[i] ? "border-up bg-up" : "border-down"}`}
@@ -132,19 +140,20 @@ function Summary({
         </ol>
       </section>
 
-      <aside className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-4 md:p-5">
+      <aside className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-3 md:gap-4 md:p-5">
         <div>
           <p className="label">Daily streak</p>
           <p className="text-3xl font-bold tabular-nums [font-stretch:88%]">
             {streak} {streak === 1 ? "day" : "days"}
           </p>
-          <p className="mt-1 flex items-center gap-1.5 text-sm text-muted">
+          <p className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm text-muted">
             <Snowflake size={14} aria-hidden />
-            {freezes > 0
-              ? `${freezes} streak ${freezes === 1 ? "freeze" : "freezes"} saved. A freeze covers one missed day.`
-              : "Play 7 days in a row to earn a streak freeze."}
+            <span>{freezes > 0 ? `${freezes} ${freezes === 1 ? "freeze" : "freezes"} saved` : "7 days in a row earns a freeze"}</span>
+            <span aria-hidden>·</span>
+            <Countdown />
           </p>
         </div>
+        <DailyReminder />
         <button
           type="button"
           onClick={share}
@@ -154,11 +163,59 @@ function Summary({
           Share score
         </button>
         {note && <p className="-mt-2 text-xs text-muted">{note}</p>}
-        <Countdown />
         <Link to="/" className="inline-flex min-h-11 items-center text-sm font-medium text-primary hover:underline">
           Keep training while you wait
         </Link>
       </aside>
+    </div>
+  );
+}
+
+function DailyReminder() {
+  const progress = useProgress();
+  const [choice, setChoice] = useState<ReminderChoice | "pending">("pending");
+  const [note, setNote] = useState<string | null>(null);
+  useEffect(() => setChoice(reminderChoice()), []);
+
+  if (!progress.days.last) return null;
+
+  async function turnOn() {
+    const result = await enableDailyReminder();
+    setChoice(reminderChoice());
+    setNote(
+      result === "on"
+        ? "Reminder on. Around 9:00."
+        : result === "denied"
+          ? "Notifications are blocked in this browser."
+          : "This browser can't send reminders.",
+    );
+  }
+
+  if (choice !== "unset") return note ? <p className="text-sm text-muted">{note}</p> : null;
+
+  return (
+    <div className="rounded-md border border-border bg-bg px-3 py-2.5">
+      <p className="text-sm font-semibold">Daily reminder</p>
+      <p className="mt-0.5 text-sm text-muted">One ping when the next set is ready.</p>
+      <div className="mt-3 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => void turnOn()}
+          className="inline-flex min-h-11 flex-1 items-center justify-center rounded-md bg-fg px-3 text-sm font-semibold text-bg"
+        >
+          Remind me
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            dismissReminder();
+            setChoice("off");
+          }}
+          className="inline-flex min-h-11 items-center px-3 text-sm font-medium text-muted"
+        >
+          Not now
+        </button>
+      </div>
     </div>
   );
 }
@@ -180,8 +237,8 @@ function Countdown() {
     return () => window.clearInterval(id);
   }, []);
   return (
-    <p className="text-sm text-muted">
-      Next Daily Chart in <span className="font-semibold text-fg tabular-nums">{left}</span>
-    </p>
+    <span>
+      Next set in <span className="font-semibold text-fg tabular-nums">{left}</span>
+    </span>
   );
 }

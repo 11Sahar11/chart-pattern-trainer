@@ -3,6 +3,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { BookOpen, CalendarCheck, ChartCandlestick, ChartColumn, Flame, History } from "lucide-react";
 import { moments } from "@/lib/real-scenarios";
 import { DAILY_SIZE, dateKey, liveStreak, useProgress } from "@/lib/progress";
+import { reminderChoice, scheduleDailyReminder } from "@/lib/reminder";
 
 const nav = [
   { to: "/", label: "Train", icon: ChartCandlestick },
@@ -53,6 +54,9 @@ function isActive(to: string, path: string) {
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const items = nav.filter((item) => item.to !== "/moments" || moments.length > 0);
+  useEffect(() => {
+    if (reminderChoice() === "on") void scheduleDailyReminder();
+  }, []);
   return (
     <div className="flex min-h-svh flex-col">
       <header className="border-b border-border bg-bg/95 pt-[env(safe-area-inset-top)] backdrop-blur-sm md:sticky md:top-0 md:z-20">
@@ -81,21 +85,15 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-3 pb-28 md:px-8 md:pt-6 md:pb-10">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-3 pb-24 md:px-8 md:pt-6 md:pb-10">{children}</main>
 
-      <footer className="mx-auto mb-24 flex w-full max-w-6xl flex-wrap items-baseline justify-between gap-x-6 gap-y-2 px-4 pb-6 text-xs text-muted md:mb-0 md:px-8">
-        <p className="max-w-[70ch]">
-          A drill, not a broker. Real charts use Yahoo Finance daily data rebased to 100. A correct call here is no
-          reason to trade real money.
-        </p>
-        <span className="flex gap-4">
-          <Link to="/patterns" className="inline-flex min-h-11 items-center underline-offset-2 hover:text-fg hover:underline md:min-h-0">
-            Chart patterns
-          </Link>
-          <Link to="/privacy" className="inline-flex min-h-11 items-center underline-offset-2 hover:text-fg hover:underline md:min-h-0">
-            Privacy
-          </Link>
-        </span>
+      <footer className="mx-auto mb-[calc(4.5rem+env(safe-area-inset-bottom))] flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-2 text-xs text-muted md:mb-0 md:px-8 md:pb-6">
+        <Link to="/privacy" hash="advice" className="inline-flex min-h-11 items-center underline-offset-2 hover:text-fg hover:underline md:min-h-0">
+          Not trading advice
+        </Link>
+        <Link to="/privacy" className="inline-flex min-h-11 items-center underline-offset-2 hover:text-fg hover:underline md:min-h-0">
+          Privacy
+        </Link>
       </footer>
 
       {/* Phone tab bar */}
