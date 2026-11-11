@@ -1,7 +1,7 @@
 // Offline support for the installed app (PWA and the Android wrapper).
 // Pages: network first, fall back to the last copy. Built assets are
 // content-hashed, so they are served from cache once fetched.
-const VERSION = "v2";
+const VERSION = "v3";
 const PAGES = `pages-${VERSION}`;
 const ASSETS = `assets-${VERSION}`;
 const PRECACHE = ["/", "/privacy", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
@@ -25,6 +25,56 @@ self.addEventListener("activate", (event) => {
       .then(() => self.clients.claim()),
   );
 });
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = (event.notification.data && event.notification.data.url) || "/daily";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      for (const client of list) {
+        if ("focus" in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+    }),
+  );
+});
+
+self.addEventListener("periodicsync", (event) => {
+  if (event.tag !== "cpt-daily") return;
+  event.waitUntil(pingDaily());
+});
+
+async function pingDaily() {
+  const done = await idbGet("daily-done");
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  if (done === today) return;
+  await self.registration.showNotification("Daily Chart is ready", {
+    body: "Five charts. Keep your streak.",
+    tag: `cpt-daily-${today}`,
+    data: { url: "/daily" },
+  });
+}
+
+function idbGet(key) {
+  return new Promise((resolve) => {
+    const open = indexedDB.open("cpt", 1);
+    open.onupgradeneeded = () => {
+      if (!open.result.objectStoreNames.contains("kv")) open.result.createObjectStore("kv");
+    };
+    open.onerror = () => resolve(null);
+    open.onsuccess = () => {
+      try {
+        const tx = open.result.transaction("kv", "readonly");
+        const req = tx.objectStore("kv").get(key);
+        req.onsuccess = () => resolve(req.result ?? null);
+        req.onerror = () => resolve(null);
+      } catch {
+        resolve(null);
+      }
+    };
+  });
+}
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;

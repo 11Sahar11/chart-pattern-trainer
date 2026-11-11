@@ -35,6 +35,8 @@ type Props = {
   markerTime?: string;
   /** Candles to mark after the reveal, e.g. a hammer at the call. */
   highlight?: { times: string[]; label: string };
+  /** Shorter plot on a phone so the call result stays above the Next button. */
+  compact?: boolean;
 };
 
 const PLOT_MS = 900;
@@ -49,7 +51,7 @@ function prefersReducedMotion() {
   return window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 }
 
-export function PriceChart({ candles, visibleCount, active, guides, markerTime, highlight }: Props) {
+export function PriceChart({ candles, visibleCount, active, guides, markerTime, highlight, compact }: Props) {
   const priceRef = useRef<HTMLDivElement>(null);
   const paneRefs = useRef<Partial<Record<IndicatorId, HTMLDivElement | null>>>({});
   // The count already on screen, so a reveal animates only the new candles.
@@ -271,7 +273,7 @@ export function PriceChart({ candles, visibleCount, active, guides, markerTime, 
       <div className="relative">
         <div
           ref={priceRef}
-          className="h-[min(42svh,320px)] w-full md:h-[440px]"
+          className={`w-full md:h-[440px] ${compact ? "h-[200px]" : "h-[min(42svh,320px)]"}`}
           role="img"
           aria-label={`Candlestick chart, ${visibleCount} of ${candles.length} days shown`}
         />

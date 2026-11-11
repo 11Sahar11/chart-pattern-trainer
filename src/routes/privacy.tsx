@@ -31,7 +31,8 @@ function Privacy() {
         </Section>
         <Section title="What stays on your device">
           Your score, streak, recent calls and chosen deck are saved in your browser's local storage
-          on your own device. They never leave it. Clearing the app's data or uninstalling the app
+          on your own device. They never leave it. If you turn on a daily reminder, this browser
+          notifies you here. There is no push server. Clearing the app's data or uninstalling the app
           deletes them.
         </Section>
         <Section title="What other services see">
@@ -48,9 +49,10 @@ function Privacy() {
           The app is not directed at children under 13 and does not knowingly collect information
           from anyone.
         </Section>
-        <Section title="Not financial advice">
-          Chart Pattern Trainer is an educational drill. It does not offer trading, brokerage or
-          investment advice.
+        <Section title="Not financial advice" id="advice">
+          Chart Pattern Trainer is a drill, not a broker. Real charts use Yahoo Finance daily data
+          rebased to 100. A correct call here is no reason to trade real money. The app does not offer
+          trading, brokerage or investment advice.
         </Section>
         <Section title="Contact">
           Questions about this policy: <span className="font-semibold select-all">{CONTACT_EMAIL}</span>
@@ -60,9 +62,9 @@ function Privacy() {
   );
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({ title, children, id }: { title: string; children: ReactNode; id?: string }) {
   return (
-    <section>
+    <section id={id}>
       <h2 className="text-lg font-bold [font-stretch:88%]">{title}</h2>
       <p className="mt-1.5 text-fg/90">{children}</p>
     </section>

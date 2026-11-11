@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { Link } from "@tanstack/react-router";
 import { ArrowDown, ArrowRight, ArrowUp, BookOpen, Check, ChevronDown, Share2, X } from "lucide-react";
 import { PriceChart } from "@/components/price-chart";
+import { chartSentence } from "@/lib/chart-copy";
 import type { Direction, IndicatorId, Scenario } from "@/lib/market";
 import { recordAnswer, type DeckId } from "@/lib/progress";
 import { patternForTag, tagsFor } from "@/lib/patterns";
 import { infoById, offeredFor, pickWasRight, readText, verdictFor, type Verdict } from "@/lib/indicators";
 import { shareReveal } from "@/lib/share";
+import { inFirstSession } from "@/lib/session";
 import { candleOutcome, detectAt, type CandleMatch } from "@/lib/candles";
 
 const calls: { id: Direction; label: string; hint: string; key: string }[] = [
@@ -85,6 +87,8 @@ export function Drill({
   }
 
   const [usedAtCall, setUsedAtCall] = useState<IndicatorId[]>([]);
+  const [hints, setHints] = useState(false);
+  useEffect(() => setHints(inFirstSession()), []);
 
   const commit = useCallback(
     (direction: Direction) => {
@@ -162,6 +166,7 @@ export function Drill({
           guides={guides}
           markerTime={markerTime}
           highlight={highlight}
+          compact={phase === "revealed"}
         />
         <fieldset className="border-t border-border px-3 py-2.5 md:px-4">
           <legend className="sr-only">Indicators offered on this chart</legend>
@@ -215,7 +220,9 @@ export function Drill({
                   <CallIcon id={call.id} />
                   <span className="lg:flex-1">
                     <span className="block text-sm font-semibold lg:text-base">{call.label}</span>
-                    <span className="hidden text-sm text-muted lg:block">{call.hint}</span>
+                    <span className={`text-[11px] leading-tight text-muted lg:text-sm ${hints ? "block" : "hidden lg:block"}`}>
+                      {call.hint}
+                    </span>
                   </span>
                   <kbd className="hidden h-6 min-w-6 items-center justify-center rounded border border-border px-1.5 text-muted lg:inline-flex">
                     {call.key}
@@ -239,70 +246,16 @@ export function Drill({
               </button>
             </div>
             {shareNote && <p className="-mt-2 text-xs text-muted">{shareNote}</p>}
-            <div>
-              <h2 className="text-xl leading-tight font-bold [font-stretch:88%] md:text-2xl">
-                {moment ?? (scenario.source ? scenario.source.ticker : scenario.pattern)}
-              </h2>
-              {scenario.source ? (
-                <p className="mt-1 text-sm text-muted tabular-nums">
-                  {moment ? `${scenario.source.ticker} · ` : ""}
-                  {scenario.source.from} → {scenario.source.to}
-                  {" · next 20 days "}
-                  <span className={`font-semibold ${scenario.source.move >= 0 ? "text-up" : "text-down"}`}>
-                    {scenario.source.move >= 0 ? "+" : ""}
-                    {scenario.source.move.toFixed(1)}%
-                  </span>
-                </p>
-              ) : null}
-              <p className="mt-1.5 text-sm">
-                You called <strong>{labelFor(pick)}</strong>. It went{" "}
-                <strong className={scenario.correct === "up" ? "text-up" : scenario.correct === "down" ? "text-down" : ""}>
-                  {labelFor(scenario.correct)}
-                </strong>
-                .
-              </p>
-            </div>
+            <p className="text-sm leading-snug">{chartSentence(scenario)}</p>
+            <p className="text-sm">
+              You called <strong>{labelFor(pick)}</strong>. It went{" "}
+              <strong className={scenario.correct === "up" ? "text-up" : scenario.correct === "down" ? "text-down" : ""}>
+                {labelFor(scenario.correct)}
+              </strong>
+              .
+            </p>
 
-            {candle && <CandleAtCall match={candle} actual={scenario.correct} />}
-
-            <section className="rounded-md bg-raised/60 p-3">
-              <h3 className="flex items-baseline justify-between gap-2 text-sm font-bold">
-                Your indicator read
-                {scored.length > 0 && (
-                  <span className="tabular-nums">
-                    {scored.filter(Boolean).length}/{scored.length} right
-                  </span>
-                )}
-              </h3>
-              <ul className="mt-2 flex flex-col gap-2">
-                {offered.map((id) => {
-                  const v = verdictFor(scenario, id);
-                  const used = usedAtCall.includes(id);
-                  const right = pickWasRight(v, used);
-                  return (
-                    <li key={id} className="flex gap-2.5 text-sm">
-                      <span className="mt-0.5 shrink-0">
-                        {right === null ? (
-                          <span aria-label="Not scored" className="block h-4 w-4 rounded-full border border-border" />
-                        ) : right ? (
-                          <Check size={16} className="text-up" aria-label="Right choice" />
-                        ) : (
-                          <X size={16} className="text-down" aria-label="Wrong choice" />
-                        )}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="font-semibold">{infoById.get(id)?.short}</span>{" "}
-                        <span className="text-muted">
-                          {v === "helped" ? "helped" : v === "misled" ? "misled" : "no clear signal"} ·{" "}
-                          {used ? "you used it" : "you left it off"}
-                        </span>
-                        <span className="block text-xs text-muted">{readText(scenario, id)}</span>
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
+            <IndicatorSummary scenario={scenario} offered={offered} usedAtCall={usedAtCall} scored={scored} />
 
             <details className="group rounded-md border border-border">
               <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-3 text-sm font-semibold">
@@ -310,6 +263,21 @@ export function Drill({
                 <ChevronDown size={16} className="text-muted transition-transform group-open:rotate-180" aria-hidden />
               </summary>
               <div className="flex flex-col gap-3 border-t border-border px-3 py-3 text-sm leading-relaxed">
+                {scenario.source ? (
+                  <p className="text-muted tabular-nums">
+                    {scenario.source.ticker}
+                    {" · "}
+                    {scenario.source.from} → {scenario.source.to}
+                    {" · "}
+                    <span className={`font-semibold ${scenario.source.move >= 0 ? "text-up" : "text-down"}`}>
+                      {scenario.source.move >= 0 ? "+" : ""}
+                      {scenario.source.move.toFixed(1)}%
+                    </span>
+                  </p>
+                ) : (
+                  <p className="font-semibold">{scenario.pattern}</p>
+                )}
+                {candle && <CandleAtCall match={candle} actual={scenario.correct} />}
                 {scenario.source?.blurb && <p>{scenario.source.blurb}</p>}
                 <p>{scenario.explanation}</p>
                 <p className="text-muted">{scenario.indicatorNote}</p>
@@ -330,7 +298,7 @@ export function Drill({
             <button
               type="button"
               onClick={onNext}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-fg px-4 font-semibold text-bg transition-opacity hover:opacity-90"
+              className="hidden min-h-12 items-center justify-center gap-2 rounded-md bg-fg px-4 font-semibold text-bg transition-opacity hover:opacity-90 md:inline-flex"
             >
               {nextLabel}
               <ArrowRight size={17} aria-hidden />
@@ -341,28 +309,82 @@ export function Drill({
     </div>
     {phase === "revealed" && (
       <div
-        className="fixed inset-x-0 z-40 border-t border-border bg-surface/95 px-3 py-2 backdrop-blur-sm md:hidden"
+        className="fixed inset-x-0 z-40 border-t border-border bg-bg/95 px-3 py-2 backdrop-blur-sm md:hidden"
         style={{ bottom: "calc(4rem + env(safe-area-inset-bottom))" }}
       >
-        <div className="mx-auto flex max-w-md items-center gap-2">
-          <p className={`shrink-0 text-base font-bold [font-stretch:88%] ${hit ? "text-up" : "text-down"}`}>
-            {hit ? "Hit" : "Miss"}
-          </p>
-          <p className="min-w-0 flex-1 truncate text-xs text-muted">
-            Called {labelFor(pick)} · went {labelFor(scenario.correct)}
-          </p>
-          <button
-            type="button"
-            onClick={onNext}
-            className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-md bg-fg px-3 text-sm font-semibold text-bg"
-          >
-            {nextLabel}
-            <ArrowRight size={15} aria-hidden />
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onNext}
+          className="mx-auto inline-flex min-h-12 w-full max-w-md items-center justify-center gap-2 rounded-md bg-fg px-4 font-semibold text-bg"
+        >
+          {nextLabel}
+          <ArrowRight size={17} aria-hidden />
+        </button>
       </div>
     )}
+    {phase === "revealed" && <div className="h-16 md:hidden" aria-hidden />}
     </>
+  );
+}
+
+function IndicatorSummary({
+  scenario,
+  offered,
+  usedAtCall,
+  scored,
+}: {
+  scenario: Scenario;
+  offered: IndicatorId[];
+  usedAtCall: IndicatorId[];
+  scored: boolean[];
+}) {
+  const [open, setOpen] = useState(false);
+  const right = scored.filter(Boolean).length;
+  const label = scored.length > 0 ? `${right}/${scored.length} right` : "No clear signal";
+  return (
+    <div className="rounded-md border border-border">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        className="flex min-h-11 w-full items-center justify-between gap-3 px-3 text-sm font-semibold"
+      >
+        <span>Indicators</span>
+        <span className={`inline-flex items-center gap-1 tabular-nums ${right === scored.length && scored.length > 0 ? "text-up" : ""}`}>
+          {label}
+          <ChevronDown size={16} className={`text-muted transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        </span>
+      </button>
+      {open && (
+        <ul className="flex flex-col gap-2 border-t border-border px-3 py-3">
+          {offered.map((id) => {
+            const v = verdictFor(scenario, id);
+            const used = usedAtCall.includes(id);
+            const ok = pickWasRight(v, used);
+            return (
+              <li key={id} className="flex gap-2.5 text-sm">
+                <span className="mt-0.5 shrink-0">
+                  {ok === null ? (
+                    <span aria-label="Not scored" className="block h-4 w-4 rounded-full border border-border" />
+                  ) : ok ? (
+                    <Check size={16} className="text-up" aria-label="Right choice" />
+                  ) : (
+                    <X size={16} className="text-down" aria-label="Wrong choice" />
+                  )}
+                </span>
+                <span className="min-w-0">
+                  <span className="font-semibold">{infoById.get(id)?.short}</span>{" "}
+                  <span className="text-muted">
+                    {v === "helped" ? "helped" : v === "misled" ? "misled" : "no clear signal"} · {used ? "you used it" : "you left it off"}
+                  </span>
+                  <span className="block text-xs text-muted">{readText(scenario, id)}</span>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }
 
