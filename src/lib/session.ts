@@ -12,11 +12,8 @@ export const FIRST_SESSION_IDS = [
   "double-top",
 ] as const;
 
-/** Practice recap waits for this many calls, or the last chart of the deck. */
+/** Practice and Real charts wait this many calls, or the last chart of the deck. */
 export const RECAP_EVERY = 10;
-
-/** Subtitles stay through that first sitting. */
-export const FIRST_SESSION_CALLS = RECAP_EVERY;
 
 function shuffle<T>(items: readonly T[], rand: () => number): T[] {
   const a = [...items];

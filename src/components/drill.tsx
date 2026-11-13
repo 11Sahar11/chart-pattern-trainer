@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import { PriceChart } from "@/components/price-chart";
 import type { Direction, IndicatorId, Scenario } from "@/lib/market";
-import { recordAnswer, useProgress, type DeckId } from "@/lib/progress";
-import { chartSentence, FIRST_SESSION_CALLS } from "@/lib/session";
+import { recordAnswer, type DeckId } from "@/lib/progress";
+import { chartSentence } from "@/lib/session";
 import { patternForTag, tagsFor } from "@/lib/patterns";
 import {
   infoById,
@@ -79,10 +79,6 @@ export function Drill({
   const [phase, setPhase] = useState<"read" | "revealed">("read");
   const [pick, setPick] = useState<Direction | null>(null);
   const panelRef = useRef<HTMLElement>(null);
-  const progress = useProgress();
-  const trainingCalls = (progress.decks.practice?.total ?? 0) + (progress.decks.real?.total ?? 0);
-  // Subtitles under the three calls, until the first sitting is underway.
-  const showHints = trainingCalls < FIRST_SESSION_CALLS;
   const offered = useMemo(
     () => offeredFor(scenario, includeIndicator),
     [scenario, includeIndicator],
@@ -268,9 +264,7 @@ export function Drill({
                     key={call.id}
                     type="button"
                     onClick={() => commit(call.id)}
-                    className={`flex flex-col items-center justify-center gap-1 rounded-md border bg-surface px-1.5 py-2 text-center transition-colors lg:min-h-14 lg:flex-row lg:justify-start lg:gap-3 lg:px-3.5 lg:py-0 lg:text-left ${
-                      showHints ? "min-h-[4.75rem]" : "min-h-16"
-                    } ${
+                    className={`flex min-h-[4.75rem] flex-col items-center justify-center gap-1 rounded-md border bg-surface px-1.5 py-2 text-center transition-colors lg:min-h-14 lg:flex-row lg:justify-start lg:gap-3 lg:px-3.5 lg:py-0 lg:text-left ${
                       call.id === "up"
                         ? "border-up/45 hover:bg-up/8"
                         : call.id === "down"
@@ -281,13 +275,7 @@ export function Drill({
                     <CallIcon id={call.id} />
                     <span className="lg:flex-1">
                       <span className="block text-sm font-semibold lg:text-base">{call.label}</span>
-                      <span
-                        className={
-                          showHints
-                            ? "mt-0.5 block text-[11px] leading-tight text-muted lg:mt-0 lg:text-sm"
-                            : "hidden text-sm text-muted lg:block"
-                        }
-                      >
+                      <span className="mt-0.5 block text-[11px] leading-tight text-muted lg:mt-0 lg:text-sm">
                         {call.hint}
                       </span>
                     </span>

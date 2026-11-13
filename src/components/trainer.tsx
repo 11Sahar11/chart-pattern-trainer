@@ -78,11 +78,10 @@ function loadOrder(mode: Mode, deck: Scenario[]): DeckState {
       // A saved sitting that doesn't line up with the chart on screen is from an older build.
       if (!p.recap && session.length !== answersIntoBlock(p.pos)) session = [];
       const saved: DeckState = { order: p.order, pos: p.pos, recap: !!p.recap, session };
-      // Real charts never stop for the Daily card. A recap saved mid-round (the old
-      // five-chart break) is dropped.
-      if (mode === "real") return { ...saved, recap: false };
+      // A recap saved mid-round (the old five-chart break) is dropped. Practice and
+      // Real charts both stop after 10 calls or at the end of the deck.
       if (
-        mode === "practice" &&
+        (mode === "practice" || mode === "real") &&
         saved.recap &&
         saved.pos !== 0 &&
         !completesSession(saved.pos - 1, size)
@@ -199,8 +198,8 @@ export function Trainer() {
   function onAnswered(right: boolean) {
     if (mode === "review") return;
     const session = [...order.session, right];
-    // The Daily card is practice-only, and only after 10 calls or the last chart.
-    const filled = mode === "practice" && completesSession(order.pos, deck.length);
+    // Practice and Real charts both stop after 10 calls or the last chart.
+    const filled = completesSession(order.pos, deck.length);
     const saved: DeckState = { ...advance({ ...order, session }), recap: filled, session };
     saveOrder(mode, saved);
     pending.current = saved;
@@ -233,9 +232,8 @@ export function Trainer() {
     ["review", "Review misses", missCount],
   ];
 
-  const showRecap = mode === "practice" && order.recap;
-  const closingPractice =
-    mode === "practice" && !showRecap && completesSession(order.pos, deck.length);
+  const showRecap = mode !== "review" && order.recap;
+  const closing = mode !== "review" && !showRecap && completesSession(order.pos, deck.length);
 
   return (
     <div className="flex flex-col gap-3">
@@ -289,7 +287,7 @@ export function Trainer() {
           nextLabel={
             mode === "review" && reviewPos + 1 >= reviewQueue.length
               ? "Finish review"
-              : closingPractice
+              : closing
                 ? "Play today's Daily"
                 : "Next"
           }
@@ -312,7 +310,7 @@ function getMisses(): Scenario[] {
     .filter((s): s is Scenario => !!s);
 }
 
-/** End of a practice sitting: today's Daily, or a countdown once it is done. */
+/** End of a practice or real sitting: today's Daily, or a countdown once it is done. */
 function SessionRecap({ hits, onContinue }: { hits: boolean[]; onContinue: () => void }) {
   const progress = useProgress();
   const today = dateKey();
@@ -332,7 +330,11 @@ function SessionRecap({ hits, onContinue }: { hits: boolean[]; onContinue: () =>
         <h2 className="text-2xl font-bold [font-stretch:88%] md:text-3xl">
           Session done. Today's chart is waiting.
         </h2>
-        <p className="mt-2 text-lg font-semibold">Day {streak} streak. One chart keeps it going.</p>
+        {streak > 0 && (
+          <p className="mt-2 text-lg font-semibold">
+            Day {streak} streak. One chart keeps it going.
+          </p>
+        )}
       </div>
       {done ? (
         <DailyCountdown />
