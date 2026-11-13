@@ -13,7 +13,7 @@ import {
 import { PriceChart } from "@/components/price-chart";
 import type { Direction, IndicatorId, Scenario } from "@/lib/market";
 import { recordAnswer, useProgress, type DeckId } from "@/lib/progress";
-import { chartSentence, SESSION_SIZE } from "@/lib/session";
+import { chartSentence, FIRST_SESSION_CALLS } from "@/lib/session";
 import { patternForTag, tagsFor } from "@/lib/patterns";
 import {
   infoById,
@@ -29,15 +29,14 @@ import { candleOutcome, detectAt, type CandleMatch } from "@/lib/candles";
 /** On a phone, sit `el` fully above the sticky Next and the tab bar. */
 function scrollAboveNext(el: HTMLElement | null) {
   if (!el || typeof window === "undefined") return;
-  if (!window.matchMedia("(max-width: 767px)").matches) return;
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   el.scrollIntoView({ block: "end", behavior: reduce ? "auto" : "smooth" });
 }
 
 const calls: { id: Direction; label: string; hint: string; key: string }[] = [
-  { id: "up", label: "Higher", hint: "Next swing resolves up", key: "↑" },
-  { id: "down", label: "Lower", hint: "Next swing resolves down", key: "↓" },
-  { id: "sideways", label: "No edge", hint: "Range, or not clear yet", key: "N" },
+  { id: "up", label: "Higher", hint: "Moves up clearly", key: "↑" },
+  { id: "down", label: "Lower", hint: "Moves down clearly", key: "↓" },
+  { id: "sideways", label: "No edge", hint: "No clear move", key: "N" },
 ];
 
 export function labelFor(direction: Direction | null) {
@@ -83,7 +82,7 @@ export function Drill({
   const progress = useProgress();
   const trainingCalls = (progress.decks.practice?.total ?? 0) + (progress.decks.real?.total ?? 0);
   // Subtitles under the three calls, until the first sitting is underway.
-  const showHints = trainingCalls < SESSION_SIZE;
+  const showHints = trainingCalls < FIRST_SESSION_CALLS;
   const offered = useMemo(
     () => offeredFor(scenario, includeIndicator),
     [scenario, includeIndicator],
@@ -255,7 +254,7 @@ export function Drill({
         <aside
           ref={panelRef}
           aria-live="polite"
-          className="flex scroll-mb-[8.75rem] flex-col gap-3 rounded-lg border border-border bg-surface p-3 md:scroll-mb-0 md:gap-4 md:p-5"
+          className="flex scroll-mb-[8.75rem] flex-col gap-3 rounded-lg border border-border bg-surface p-3 md:scroll-mb-24 md:gap-4 md:p-5"
         >
           {phase === "read" ? (
             <>
@@ -348,7 +347,7 @@ export function Drill({
               </div>
 
               <details
-                className="group scroll-mb-[8.75rem] rounded-md border border-border md:scroll-mb-0"
+                className="group scroll-mb-[8.75rem] rounded-md border border-border md:scroll-mb-24"
                 onToggle={(e) => {
                   if (e.currentTarget.open) scrollAboveNext(e.currentTarget);
                 }}
@@ -404,7 +403,7 @@ export function Drill({
               </details>
 
               <details
-                className="group scroll-mb-[8.75rem] rounded-md border border-border md:scroll-mb-0"
+                className="group scroll-mb-[8.75rem] rounded-md border border-border md:scroll-mb-24"
                 onToggle={(e) => {
                   if (e.currentTarget.open) scrollAboveNext(e.currentTarget);
                 }}
@@ -441,25 +440,14 @@ export function Drill({
                   )}
                 </div>
               </details>
-
-              <button
-                type="button"
-                onClick={onNext}
-                className="hidden min-h-12 w-full items-center justify-center gap-2 rounded-md bg-fg px-4 font-semibold text-bg transition-opacity hover:opacity-90 md:inline-flex"
-              >
-                {nextLabel}
-                <ArrowRight size={17} aria-hidden />
-              </button>
             </>
           )}
         </aside>
       </div>
+      {phase === "revealed" && <div className="hidden h-16 md:block" aria-hidden />}
       {phase === "revealed" && (
-        <div
-          className="fixed inset-x-0 z-40 border-t border-border bg-surface/95 px-3 py-2 backdrop-blur-sm md:hidden"
-          style={{ bottom: "calc(4rem + env(safe-area-inset-bottom))" }}
-        >
-          <div className="mx-auto max-w-md">
+        <div className="fixed inset-x-0 z-40 border-t border-border bg-surface/95 px-3 py-2 backdrop-blur-sm bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-0 md:px-8">
+          <div className="mx-auto w-full max-w-6xl">
             <button
               type="button"
               onClick={onNext}

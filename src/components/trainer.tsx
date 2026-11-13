@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { CalendarCheck, ChevronDown, Flame } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { Drill, Tally } from "@/components/drill";
 import { Onboarding } from "@/components/onboarding";
 import { scenarios as practiceScenarios } from "@/lib/scenarios";
@@ -15,7 +15,12 @@ import {
   TALLY,
   useProgress,
 } from "@/lib/progress";
-import { arrangeFirstSession, completesSession, sessionProgress } from "@/lib/session";
+import {
+  answersIntoBlock,
+  arrangeFirstSession,
+  completesSession,
+  FIRST_SESSION_IDS,
+} from "@/lib/session";
 
 type Mode = "practice" | "real" | "review";
 const MODE_KEY = "cpt-mode";
@@ -34,9 +39,12 @@ function shuffled(n: number, avoidFirst?: number): number[] {
   return a;
 }
 
-function isNewPlayer(): boolean {
-  const p = getProgress();
-  return (p.decks.practice?.total ?? 0) + (p.decks.real?.total ?? 0) === 0;
+function practiceCalls(): number {
+  return getProgress().decks.practice?.total ?? 0;
+}
+
+function hasFixedOpen(deck: Scenario[], order: number[]): boolean {
+  return FIRST_SESSION_IDS.every((id, i) => deck[order[i]]?.id === id);
 }
 
 function freshOrder(deck: Scenario[], easy: boolean): DeckState {
@@ -64,18 +72,44 @@ function loadOrder(mode: Mode, deck: Scenario[]): DeckState {
       p.pos >= 0 &&
       p.pos < size
     ) {
-      const sitting = sessionProgress(p.pos, size);
       let session = Array.isArray(p.session)
         ? p.session.filter((x): x is boolean => typeof x === "boolean")
         : [];
       // A saved sitting that doesn't line up with the chart on screen is from an older build.
-      if (!p.recap && session.length !== sitting.index) session = [];
-      return { order: p.order, pos: p.pos, recap: !!p.recap, session };
+      if (!p.recap && session.length !== answersIntoBlock(p.pos)) session = [];
+      const saved: DeckState = { order: p.order, pos: p.pos, recap: !!p.recap, session };
+      // Real charts never stop for the Daily card. A recap saved mid-round (the old
+      // five-chart break) is dropped.
+      if (mode === "real") return { ...saved, recap: false };
+      if (
+        mode === "practice" &&
+        saved.recap &&
+        saved.pos !== 0 &&
+        !completesSession(saved.pos - 1, size)
+      ) {
+        saved.recap = false;
+        saved.session = [];
+      }
+      if (
+        mode === "practice" &&
+        practiceCalls() === 0 &&
+        p.pos === 0 &&
+        !p.recap &&
+        hasFixedOpen(deck, p.order)
+      ) {
+        return saved;
+      }
+      if (mode === "practice" && practiceCalls() === 0) {
+        const fresh = freshOrder(deck, true);
+        saveOrder(mode, fresh);
+        return fresh;
+      }
+      return saved;
     }
   } catch {
     // fresh shuffle
   }
-  const fresh = freshOrder(deck, mode !== "review" && isNewPlayer());
+  const fresh = freshOrder(deck, mode === "practice" && practiceCalls() === 0);
   saveOrder(mode, fresh);
   return fresh;
 }
@@ -159,14 +193,14 @@ export function Trainer() {
     label = `Review ${reviewPos + 1} of ${reviewQueue.length}`;
   } else {
     scenario = deck[order.order[order.pos] ?? 0];
-    const sitting = sessionProgress(order.pos, deck.length);
-    label = `Setup ${sitting.index + 1} of ${sitting.size}`;
+    label = `Setup ${order.pos + 1} of ${deck.length}`;
   }
 
   function onAnswered(right: boolean) {
     if (mode === "review") return;
     const session = [...order.session, right];
-    const filled = completesSession(order.pos, deck.length);
+    // The Daily card is practice-only, and only after 10 calls or the last chart.
+    const filled = mode === "practice" && completesSession(order.pos, deck.length);
     const saved: DeckState = { ...advance({ ...order, session }), recap: filled, session };
     saveOrder(mode, saved);
     pending.current = saved;
@@ -199,7 +233,9 @@ export function Trainer() {
     ["review", "Review misses", missCount],
   ];
 
-  const showRecap = mode !== "review" && order.recap;
+  const showRecap = mode === "practice" && order.recap;
+  const closingPractice =
+    mode === "practice" && !showRecap && completesSession(order.pos, deck.length);
 
   return (
     <div className="flex flex-col gap-3">
@@ -251,7 +287,11 @@ export function Trainer() {
           onAnswered={onAnswered}
           onNext={onNext}
           nextLabel={
-            mode === "review" && reviewPos + 1 >= reviewQueue.length ? "Finish review" : "Next"
+            mode === "review" && reviewPos + 1 >= reviewQueue.length
+              ? "Finish review"
+              : closingPractice
+                ? "Play today's Daily"
+                : "Next"
           }
         />
       ) : (
@@ -272,7 +312,7 @@ function getMisses(): Scenario[] {
     .filter((s): s is Scenario => !!s);
 }
 
-/** End of a sitting: the score, then today's Daily and the streak that brings them back. */
+/** End of a practice sitting: today's Daily, or a countdown once it is done. */
 function SessionRecap({ hits, onContinue }: { hits: boolean[]; onContinue: () => void }) {
   const progress = useProgress();
   const today = dateKey();
@@ -282,52 +322,59 @@ function SessionRecap({ hits, onContinue }: { hits: boolean[]; onContinue: () =>
 
   return (
     <section className="graph-paper flex flex-col gap-5 rounded-lg border border-border px-5 py-6 md:px-8 md:py-8">
+      {hits.length > 0 && (
+        <p className="text-4xl font-bold tabular-nums [font-stretch:88%]">
+          {right}
+          <span className="text-muted">/{hits.length}</span>
+        </p>
+      )}
       <div>
-        <h2 className="text-2xl font-bold [font-stretch:88%] md:text-3xl">Session done</h2>
-        {hits.length > 0 && (
-          <p className="mt-2 text-4xl font-bold tabular-nums [font-stretch:88%]">
-            {right}
-            <span className="text-muted">/{hits.length}</span>
-            <span className="ml-2 text-lg font-semibold">right</span>
-          </p>
-        )}
-        {hits.length > 0 && (
-          <div className="mt-3">
-            <Tally recent={hits} size={hits.length} />
-          </div>
-        )}
+        <h2 className="text-2xl font-bold [font-stretch:88%] md:text-3xl">
+          Session done. Today's chart is waiting.
+        </h2>
+        <p className="mt-2 text-lg font-semibold">Day {streak} streak. One chart keeps it going.</p>
       </div>
-
-      <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4">
-        <p className="label">Today's Daily Chart</p>
-        <p className="flex items-center gap-2 text-2xl font-bold [font-stretch:88%]">
-          <Flame size={22} className="text-ema" aria-hidden />
-          {streak > 0 ? `${streak}-day streak` : "Start a streak"}
-        </p>
-        <p className="text-sm leading-relaxed text-muted">
-          {done
-            ? "You've played today's five charts. A new set is ready at midnight."
-            : streak > 0
-              ? "Today's five charts keep the streak going. Same charts for everyone."
-              : "Five charts, the same for everyone today. Play them to start a streak."}
-        </p>
+      {done ? (
+        <DailyCountdown />
+      ) : (
         <Link
           to="/daily"
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-fg px-4 font-semibold text-bg transition-opacity hover:opacity-90"
+          className="inline-flex min-h-12 items-center justify-center rounded-md bg-fg px-4 font-semibold text-bg transition-opacity hover:opacity-90"
         >
-          <CalendarCheck size={18} aria-hidden />
-          {done ? "See today's score" : "Play today's Daily"}
+          Play today's Daily
         </Link>
-      </div>
-
+      )}
       <button
         type="button"
         onClick={onContinue}
-        className="inline-flex min-h-12 items-center justify-center rounded-md border border-border bg-surface px-4 font-semibold"
+        className="self-center text-sm text-muted underline-offset-2 hover:underline"
       >
         Keep training
       </button>
     </section>
+  );
+}
+
+function DailyCountdown() {
+  const [left, setLeft] = useState("");
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      const next = new Date(now);
+      next.setHours(24, 0, 0, 0);
+      const s = Math.max(0, Math.floor((next.getTime() - now.getTime()) / 1000));
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      setLeft(`${h}h ${String(m).padStart(2, "0")}m`);
+    };
+    tick();
+    const id = window.setInterval(tick, 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+  return (
+    <p className="text-sm text-muted">
+      Next Daily Chart in <span className="font-semibold text-fg tabular-nums">{left}</span>
+    </p>
   );
 }
 
