@@ -35,25 +35,27 @@ function Privacy() {
           deletes them.
         </Section>
         <Section title="What other services see">
-          Like any website, the app is delivered by a hosting provider (Vercel), which keeps standard
-          server logs such as IP address and browser type for security and reliability. Fonts load
-          from Google Fonts, which receives your IP address when it serves them. We do not receive or
-          use any of this data.
+          Like any website, the app is delivered by a hosting provider (Vercel), which keeps
+          standard server logs such as IP address and browser type for security and reliability.
+          Fonts load from Google Fonts, which receives your IP address when it serves them. We do
+          not receive or use any of this data.
         </Section>
         <Section title="Market data">
-          Real charts use historical daily prices from Yahoo Finance, prepared in advance and shipped
-          with the app. Nothing about you is sent to Yahoo.
+          Real charts use historical daily prices from Yahoo Finance, prepared in advance and
+          shipped with the app. Nothing about you is sent to Yahoo.
         </Section>
         <Section title="Children">
           The app is not directed at children under 13 and does not knowingly collect information
           from anyone.
         </Section>
         <Section title="Not financial advice">
-          Chart Pattern Trainer is an educational drill. It does not offer trading, brokerage or
-          investment advice.
+          This trains pattern reading, not live trading. Chart Pattern Trainer is an educational
+          drill. It does not offer trading, brokerage or investment advice, and a correct call here
+          is no reason to trade real money.
         </Section>
         <Section title="Contact">
-          Questions about this policy: <span className="font-semibold select-all">{CONTACT_EMAIL}</span>
+          Questions about this policy:{" "}
+          <span className="font-semibold select-all">{CONTACT_EMAIL}</span>
         </Section>
       </div>
     </div>
